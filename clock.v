@@ -8,7 +8,6 @@ module clock(output reg clk);
 		clk <= 0;
 		$monitor("Clk: $d", cycle);
 		//while (true)
-		$display("alal");
 	end 
 
 	always begin
