@@ -22,14 +22,19 @@ wire [31:0] data = 0;
 
 // Wires: in_pc, pc, pcEnable
 `include "programcounter.v"
-
+`include "rgs.v"
 initial begin
+
+#1 reset = 1;
+#1 reset = 0;
 
 
 $dumpfile("computation.vcd");
-$dumpvars(0,processor_tb);
+//$dumpvars(0,processor_tb);
 
-
+#10 
+in_rgs = 32'b11;
+rgs_enable[11] = 1;
 
 #50 $finish;
 
