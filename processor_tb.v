@@ -25,27 +25,27 @@ wire [31:0] finalResult;           // Output of reg32 for the ALU result
 
 // Instantiate reg32 modules for ALU inputs and output
 reg32 reg1 (
-    .inData(inData1),
+    .in_data(inData1),
     .clk(clk),
     .enable(enable),
     .reset(reset),
-    .outData(src1)
+    .out_data(src1)
 );
 
 reg32 reg2 (
-    .inData(inData2),
+    .in_data(inData2),
     .clk(clk),
     .enable(enable),
     .reset(reset),
-    .outData(src2)
+    .out_data(src2)
 );
 
 reg32 resultReg (
-    .inData(aluResult),
+    .in_data(aluResult),
     .clk(clk),
     .enable(enable),
     .reset(reset),
-    .outData(finalResult)
+    .out_data(finalResult)
 );
 
 // Instantiate the ALU, using reg32 outputs as inputs
