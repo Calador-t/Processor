@@ -1,0 +1,4 @@
+add r1 r2 r3
+sub r31 r2 r12
+jump r2 557056
+iret
