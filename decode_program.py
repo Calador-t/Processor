@@ -70,11 +70,11 @@ for line in file:
 	# Type of instruction (M, R B)
 	it = ""
 	binary = ""
-	src1 = "00000"
-	src2 = "00000"
-	dst = "00000"
-	offset = "000000000000000"
-	big_offset = "00000000000000000000"
+	src1 = ""
+	src2 = ""
+	dst = ""
+	offset = ""
+	big_offset = ""
 	for i, word in enumerate(words):
 		if i == 0:
 			oc = word
@@ -114,7 +114,7 @@ for line in file:
 	
 	if len(src1) != 5:	
 		raise SystemExit("Error: src1 not 5b: " + line)
-	if len(src2) != 5:	
+	if it == "R" and len(src2) != 5:	
 		raise SystemExit("Error: src2 not 5b: " + line)
 	if len(dst) != 5:	
 		raise SystemExit("Error: dst not 5b: " + line)
