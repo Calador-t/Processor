@@ -1,7 +1,8 @@
 module alu(
+    input [31:0] instruction,
     input [31:0] src1,
     input [31:0] src2,
-    input [3:0] op,
+    input [6:0] op,
     output reg [31:0] result 
 );
 
@@ -12,14 +13,12 @@ module alu(
             4'b0010: result = src1 * src2;   // MUL
             default: result = 0;
         endcase
+	$display("ALU:    Instruction: %h, SRC1: %d, SRC2: %d, OP: %d, RESULT: %d", instruction, src1, src2, op, result);
     end
 endmodule
 
 
-//Each instruction is 32bits.
-//ADD r1, r2 ->r3  	// Add two registers
-//SUB r1, r2 ->r3  	// Subtract two registers
-//MUL r1, r2->3	// Multiply two registers
+//Each instruction is 32bits. TODOO:
 //LDB 80(r1) ->r0  	// Load Byte; base register + offset
 //LDW 80(r1) ->r0 	// Load Word; base register + offset
 //STB r0 ->80(r1) 	// Store Byte; base register + offset

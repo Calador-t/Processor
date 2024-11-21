@@ -1,6 +1,7 @@
 `include "clock.v"
 `include "reg32.v"
 `include "alu.v"
+`include "processor.v"
 
 module processor_tb;
 

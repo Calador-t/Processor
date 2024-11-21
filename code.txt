@@ -1,3 +1,6 @@
 add r1 r2 r1
 sub r31 r2 r12
+add r2 r3 r4
+sub r4 r5 r6
+mul r4 r3 r2
 jump r2 557056
