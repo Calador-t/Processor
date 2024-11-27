@@ -1,19 +1,19 @@
+wire reset_pc;
 
-
-reg [31:0] in_pc = 0;
-wire [31:0] pc;
-reg pc_enable = 1;
-
-reg32 pcReg (
-	.in_data(in_pc),
-	.clk(clk),
-	.enable(pc_enable),
-	.reset(reset),
-	.out_data(pc)
-);
-
-always @(posedge clk) begin
-	#0.1;
-	
-	in_pc <= pc + 1;
+wire enable_pc = 1;
+reg [31:0] pc = 0;
+reg was_reseted = 1;
+always @(posedge clk or posedge reset) begin
+	if (reset_pc) begin
+		pc <= 32'b0;
+		was_reseted <= 1;
+	end
+	else if (enable_pc) begin
+		if (was_reseted) begin
+			was_reseted <= 0;
+		end
+		else begin
+			pc <= pc + 1;
+		end
+	end
 end

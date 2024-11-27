@@ -54,12 +54,17 @@ def to_big_offset(offset, it):
 # ---  Code Start  ---
 # --------------------
 import sys
+import os
 
 file_path = "code.txt"
 if len(sys.argv) >= 2 and sys.argv[1] != "":
 	file_path = sys.argv[1]
 print("From " + file_path + ":")
 file = open(file_path, 'r+')
+if not os.path.exists('asmbl.bin'):
+    os.mknod('ambl.bin')
+target_file = open('asmbl.bin', 'w');
+
 
 for line in file:
 	# Print each line
@@ -121,13 +126,14 @@ for line in file:
 	if it == "M" and len(offset) != 15:	
 		raise SystemExit("Error: offset not 15b: " + line)
 	if it == "B" and len(big_offset) != 20:	
-		raise SystemExit("Error: big_offset not 20b: " + line)
+		raise SystemExit("Error: big_offset not 20b: " + line + " big_offset: " + big_offset)
 	if len(binary) != 32:	
 		raise SystemExit("Error: Code for inst " + line + " not 32 bits long")
 	if it == "R":
 		print(binary[0:7] + "|" + binary[7:12] + "|" + binary[12:17] + "|" + binary[17:22] + "|" + binary[22:])
 	else:
 		print(binary[0:7] + "|" + binary[7:12] + "|" + binary[12:17] + "|" + binary[17:])
+	target_file.write(binary + "\n")
 	print("")
 
 

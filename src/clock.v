@@ -1,20 +1,17 @@
 `timescale 1ns/1ps
 
+// Preclock is for debug and is called imediatly before clock is set
 module clock(output reg clk);
 
 	parameter PERIOD = 10;
-	integer cycle = -1;
 	initial begin
 		clk <= 0;
 	end 
 
 	always begin
-		if (clk == 0) begin
-			cycle <= cycle + 1;
-			if (cycle >= 0) // Ignore first step with -1
-				$display("Cycle: %d", cycle);
-		end
-		#(PERIOD / 2) clk = ~clk; // invert clk
+		// make pre clock happen before clk to print end of cycle and make sure that the registers are filled
+		#(PERIOD / 2) 
+		clk = ~clk; // invert clk
 	end
 
 endmodule
