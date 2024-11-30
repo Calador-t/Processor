@@ -6,7 +6,7 @@ wire [31:0] a_pc;
 ff #(.BITS(32)) ff_a_pc (
     .in(d_pc),
     .clk(clk),
-    .enable(wb_enable),
+    .enable(a_enable),
     .reset(reset),
     .out(a_pc)
 );
@@ -59,20 +59,62 @@ ff #(.BITS(32)) ff_a_res (
     .out(a_res)
 );
 
+wire a_jump;
+reg a_jump_in;
+ff #(.BITS(1)) ff_a_jump (
+    .in(a_jump_in),
+    .clk(clk),
+    .enable(wb_enable),
+    .reset(reset),
+    .out(a_jump)
+);
+
+reg a_nop_in = 0;
+wire a_nop;
+ff #(.BITS(1)) ff_a_nop (
+    .in(d_nop || a_nop_in),
+    .clk(clk),
+    .enable(a_enable),
+    .reset(reset),
+    .out(a_nop)
+);
+
+reg a_wait = 0;
+
+
+// 0: ADD, 1: SUB, 2: MUL, 3: beq => ret 1, 4: jump
 always @(posedge clk or posedge reset) begin
-	if (reset == 0 && enable == 1) begin
+	if (reset == 0) begin
 		#0.3
+        
 		if (d_func == 0) begin
 			a_res_in = d_r_a + d_r_b;
-			//#0.01 $display("Add: %0d", a_res_in);
+            a_jump_in = 0;
 		end else if (d_func == 1) begin
 			a_res_in = d_r_a - d_r_b;
-			//#0.01 $display("Sub: %0d", a_res_in);
+            a_jump_in = 0;
+		end else if (d_func == 2) begin
+            a_res_in = d_r_a * d_r_b;
+            a_jump_in = 0;
+        end else if (d_func == 3) begin
+            if (d_r_a == 0) begin
+                // d_r_b is offset
+                a_res_in = d_r_b;
+                a_jump_in = 1;
+            end else begin
+                a_res_in = 0;
+                a_jump_in = 0;
+            end
+            //$display("Beq val %0d", a_jump_in);
+		end else if (d_func == 4) begin
+            // d_r_b is offset
+            a_res_in = d_r_a + $signed(d_r_b);
+            a_jump_in = 1;
 		end else begin
-			a_res_in = d_r_a * d_r_b;
-			//#0.01 $display("Mul: %0d", a_res_in);
-		end
-
+            a_res_in = 0;
+            a_jump_in = 0;
+        end
+        
 	end
 end
 		
