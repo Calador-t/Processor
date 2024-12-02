@@ -2,8 +2,9 @@
 
 assign reset_pc = reset;
 // if 
-assign enable_inc = ~(f_wait || d_wait || a_wait || c_wait); 
-assign f_enable = enable_inc;
+assign f_enable = ~(d_wait || a_wait || c_wait);
+assign enable_inc = f_enable;
+
 reg [31:0] memory [0:35];
 wire f_enable = 1;
 

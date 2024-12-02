@@ -1,5 +1,5 @@
-reg a_enable = 1; // TODO make wire
-
+wire a_enable = 1; // TODO make wire
+assign d_enable = ~(c_wait); 
 
 
 wire [31:0] a_pc;
