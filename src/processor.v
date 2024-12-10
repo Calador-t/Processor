@@ -20,7 +20,6 @@ wire [31:0] data = 0;
 
 
 `include "rgs.v"
-`include "mem.v"
 `include "ff.v"
 `include "fetch/fetch.v"
 `include "decode/decode.v"
@@ -29,13 +28,14 @@ wire [31:0] data = 0;
 `include "write_back/write_back.v"
 
 
+
 initial begin
 
 
 #1 reset = 1;
 #1 reset = 0;
 
-#90 $finish;
+#220 $finish;
 
 
 
@@ -53,7 +53,7 @@ end
 task print_pipeline;
 begin
 	$display("");
-	
+	$display("ICACHE %d | %d | %d | %d", icache_data[0], icache_data[1], icache_data[2], icache_data[3]);
 	$display("  %h  F", pc[11:0]);
 	$display("  %h  D: %h|%h|%h|%h|%h nop: %d", 
 		f_pc[11:0],

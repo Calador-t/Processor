@@ -1,6 +1,6 @@
 
 wire d_enable = 1; // TODO make wire
-assign d_enable = ~(a_wait || c_wait); 
+assign d_enable = ~( a_wait || c_wait); 
 
 wire [31:0] d_pc;
 ff #(.BITS(32)) ff_d_pc (
@@ -119,6 +119,9 @@ always @(posedge clk or posedge reset) begin
 		else begin		
 			d_r_b_in <= {f_instr[24:20], f_instr[14:0]};
 		end
+		// $display("D_NOPIN %d, F_NOP %d", d_nop_in, f_nop); 
+		// $display("D_NOP %d, F_NOP %d", d_nop, f_nop); 
+
 	end
 end
 
@@ -145,9 +148,9 @@ function [32:0] try_bypass;
 	begin
 		if (d_nop == 0 && adr == d_r_d_a) begin
 			// Dependency from decode no bypass possible
-			//$display("  Stall %h: RAW r%0d unresolvable from decode", f_pc[11:0], adr);
-			d_nop_in = 1;
-			d_wait = 1;
+			$display("  Stall %h: RAW r%0d unresolvable from decode", f_pc[11:0], adr);
+			// d_nop_in = 1;
+			// d_wait = 1;
 			try_bypass = 32'bx;
 		end else if (a_nop == 0 && adr == a_r_d_a && a_w) begin
 			// Try bypass from alu first
@@ -156,9 +159,9 @@ function [32:0] try_bypass;
 			end
 			else begin
 				// value not ready yet, wait
-				d_nop_in = 1;
-				d_wait = 1;
-				//$display("  Stall %h: dependency unresolvable from alu", f_pc[11:0]);
+				// d_nop_in = 1;
+				// d_wait = 1;
+				$display("  Stall %h: dependency unresolvable from alu", f_pc[11:0]);
 				try_bypass =  32'bx;
 			end
 		end else if (a_nop == 0 && adr == c_r_d_a && c_w) begin
@@ -166,9 +169,9 @@ function [32:0] try_bypass;
 			if (c_nop == 0) begin
 				try_bypass = c_res;
 			end else begin
-				d_nop_in = 1;
-				d_wait = 1;
-				//$display("  Stall %h: dependency unresolvable from cache", f_pc[11:0]);
+				// d_nop_in = 1;
+				// d_wait = 1;
+				$display("  Stall %h: dependency unresolvable from cache", f_pc[11:0]);
 				try_bypass = 32'bx;
 			end
 		end else

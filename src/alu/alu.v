@@ -86,7 +86,7 @@ reg a_wait = 0;
 always @(posedge clk or posedge reset) begin
 	if (reset == 0) begin
 		#0.3
-        
+        // $display("D_NOP %d, A_NOP %d", d_nop, a_nop_in); 
 		if (d_func == 0) begin
 			a_res_in = d_r_a + d_r_b;
             a_jump_in = 0;

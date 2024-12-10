@@ -7,6 +7,9 @@ reg [31:0] pc_in = 0;
 reg pc_jump = 0;
 reg was_reseted = 1;
 always @(posedge clk or posedge reset) begin
+	// $display("PC %d %d %d %d", pc, enable_pc, enable_inc, was_reseted);
+	// $display("WAIT F %d D %d A %d C %d", f_wait, d_wait, a_wait, c_wait);
+	// $display("ENABLE INC %d ENABLE PC %d", enable_inc, enable_pc);
 	if (reset_pc) begin
 		pc <= 32'b0;
 		was_reseted <= 1;
