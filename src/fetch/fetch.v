@@ -1,5 +1,4 @@
 `include "fetch/programcounter.v"
-`include "fetch/instruction_mem.v"
 `include "fetch/instruction_cache.v"
 
 assign reset_pc = reset;
@@ -49,29 +48,30 @@ reg hit = 0;
 
 initial begin 
 	// Load instructions into memory here or use an external file.
-	$readmemb("memory/instructions.bin", __mem_data);
+	$readmemb("memory/memory.bin", __mem_data);
 end
 
 always @(posedge clk or posedge reset) begin
     if (reset) begin
 		$display("reset");
         f_wait <= 0;
-        mem_read <= 0;
+        imem_read <= 0;
         f_instr_input <= 32'bx; // Clear instruction register
 		f_nop_in = 0;
     end else if (!f_wait) begin // Look into cache
-		$display("Retrieving instruction");
-		icache_pc <= pc;
+		// $display("Forwarding to cache");
+		#0.01
+		iaddr <= pc;
 		icache_read <= 1;
-	end else if (mem_read) begin  // getting from mem currently
-		if (mem_finished) begin // finished mem look
-			$display("Reading from memory finished");
+	end else if (imem_read) begin  // getting from mem currently
+		if (imem_finished) begin // finished mem look
+			// $display("Reading from memory finished");
             icache_write <= 1;
 		end else begin // keep looking
-			$display("Reading from memory");
+			// $display("Reading from memory");
 		end
 	end else begin
-		$display("Else branch %d", mem_read);
+		// $display("Else branch %d", imem_read);
 		f_nop_in = 1;
 		f_wait = 1;
 	end

@@ -1,6 +1,12 @@
-add r1 r2 r1
+add r4 r5 r3
 sub r31 r2 r12
 add r2 r3 r4
 sub r4 r5 r6
 mul r4 r3 r2
 jump r2 557056
+ldw r1 4 r3
+ldw r2 5 r2
+ldw r3 6 r1
+add r10 r11 r1
+stw r1 0 r4
+ldw r1 0 r4

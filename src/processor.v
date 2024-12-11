@@ -24,8 +24,9 @@ wire [31:0] data = 0;
 `include "fetch/fetch.v"
 `include "decode/decode.v"
 `include "alu/alu.v"
-`include "memory/cache.v"
+`include "memory/dcache.v"
 `include "write_back/write_back.v"
+`include "memory/mem.v"
 
 
 
@@ -35,7 +36,7 @@ initial begin
 #1 reset = 1;
 #1 reset = 0;
 
-#220 $finish;
+#150 $finish;
 
 
 
@@ -45,15 +46,17 @@ end
 
 always @(posedge clk or posedge reset) begin
 	if (~reset) begin
-		#0.00000000001
+		#0.9
 		print_pipeline();
 	end
 end
+
 
 task print_pipeline;
 begin
 	$display("");
 	$display("ICACHE %d | %d | %d | %d", icache_data[0], icache_data[1], icache_data[2], icache_data[3]);
+	$display("DCACHE %d | %d | %d | %d", dcache_data[0], dcache_data[1], dcache_data[2], dcache_data[3]);
 	$display("  %h  F", pc[11:0]);
 	$display("  %h  D: %h|%h|%h|%h|%h nop: %d", 
 		f_pc[11:0],

@@ -104,10 +104,14 @@ always @(posedge clk or posedge reset) begin
 		d_nop_in = 0;
 		#0.05
 		d_func_in <= calc_func(f_instr[31:25]);
-		d_r_d_a_in <= f_instr[24:20];
+		#0.01
+		if (d_func_in == 5) begin // LDW
+			
+		end
+		d_r_d_a_in <= f_instr[24:20]; //Destination
 		d_is_load_in <= f_instr[31:25] == 'h11;
 		d_is_store_in <= f_instr[31:25] == 'h13;
-		d_r_a_in <= try_bypass(f_instr[19:15]);
+		d_r_a_in <= try_bypass(f_instr[19:15]); //SRC1
 		d_w_in <= needs_write(f_instr[31:25]);
 		if (f_instr[31:29] == 0) begin
 			d_r_b_in <= try_bypass(f_instr[14:10]);
@@ -129,16 +133,20 @@ end
 function [2:0] calc_func;
 	input [5:0] op;
 	begin
-		if (op == 'h1)
+		if (op == 'h1)//SUB
 			calc_func = 1;
-		else if (op == 'h2)
+		else if (op == 'h2)//MUL
 			calc_func = 2;
-		else if (op == 'h30)
+		else if (op == 'h30) //BEQ
 			calc_func = 3;
-		else if (op == 'h31)
+		else if (op == 'h31) //JUMP
 			calc_func = 4;
+		else if (op == 'h11) //LDW
+			calc_func = 5;
+		else if (op == 'h13) //STW
+			calc_func = 6;
 		else
-			calc_func = 0;
+			calc_func = 0; //ADD
 	end
 endfunction 
 
@@ -149,8 +157,8 @@ function [32:0] try_bypass;
 		if (d_nop == 0 && adr == d_r_d_a) begin
 			// Dependency from decode no bypass possible
 			$display("  Stall %h: RAW r%0d unresolvable from decode", f_pc[11:0], adr);
-			// d_nop_in = 1;
-			// d_wait = 1;
+			d_nop_in = 1;
+			d_wait = 1;
 			try_bypass = 32'bx;
 		end else if (a_nop == 0 && adr == a_r_d_a && a_w) begin
 			// Try bypass from alu first
@@ -159,8 +167,8 @@ function [32:0] try_bypass;
 			end
 			else begin
 				// value not ready yet, wait
-				// d_nop_in = 1;
-				// d_wait = 1;
+				d_nop_in = 1;
+				d_wait = 1;
 				$display("  Stall %h: dependency unresolvable from alu", f_pc[11:0]);
 				try_bypass =  32'bx;
 			end
@@ -169,8 +177,8 @@ function [32:0] try_bypass;
 			if (c_nop == 0) begin
 				try_bypass = c_res;
 			end else begin
-				// d_nop_in = 1;
-				// d_wait = 1;
+				d_nop_in = 1;
+				d_wait = 1;
 				$display("  Stall %h: dependency unresolvable from cache", f_pc[11:0]);
 				try_bypass = 32'bx;
 			end
@@ -183,7 +191,7 @@ endfunction
 function needs_write;
 	input [5:0] op;
 	begin 
-		if ((op == 'h12) || (op == 'h30) || (op == 'h31) || (op == 'h32) || (op == 'h33)) begin
+		if ((op == 'h12) || (op == 'h13) || (op == 'h30) || (op == 'h31) || (op == 'h32) || (op == 'h33)) begin
 			needs_write = 0;
 		end else	
 			needs_write = 1;

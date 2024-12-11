@@ -1,5 +1,5 @@
 wire a_enable = 1; // TODO make wire
-assign d_enable = ~(c_wait); 
+assign a_enable = ~(c_wait); 
 
 
 wire [31:0] a_pc;
@@ -14,6 +14,7 @@ ff #(.BITS(32)) ff_a_pc (
 
 
 wire [4:0] a_r_d_a;
+// reg [4:0] a_r_d_a_in;
 ff #(.BITS(5)) ff_a_r_d_a (
     .in(d_r_d_a),
     .clk(clk),
@@ -108,8 +109,13 @@ always @(posedge clk or posedge reset) begin
             //$display("Beq val %0d", a_jump_in);
 		end else if (d_func == 4) begin
             // d_r_b is offset
-            a_res_in = d_r_a + $signed(d_r_b);
+            a_res_in <= d_r_d_a + $signed(d_r_b);
             a_jump_in = 1;
+        end else if (d_func == 5) begin
+            a_res_in <= d_r_a + $signed(d_r_b);
+        end else if (d_func == 6) begin
+            // a_res_in = d_r_a + $signed(d_r_b);
+            // a_r_d_a <= d_r_a; // Move real destination
 		end else begin
             a_res_in = 0;
             a_jump_in = 0;
