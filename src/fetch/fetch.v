@@ -57,7 +57,7 @@ always @(posedge clk or posedge reset) begin
         f_wait <= 0;
         imem_read <= 0;
         f_instr_input <= 32'bx; // Clear instruction register
-		f_nop_in = 0;
+		f_nop_in = 1;
     end else if (!f_wait) begin // Look into cache
 		// $display("Forwarding to cache");
 		#0.01

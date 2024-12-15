@@ -23,7 +23,7 @@ always @(posedge clk or posedge reset) begin
 
 				pc <= pc_in;
 			end else if(enable_inc) begin
-				pc <= pc + 1;
+				pc <= pc + 4;
 			end
 		end
 	end

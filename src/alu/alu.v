@@ -14,13 +14,30 @@ ff #(.BITS(32)) ff_a_pc (
 
 
 wire [4:0] a_r_d_a;
-// reg [4:0] a_r_d_a_in;
 ff #(.BITS(5)) ff_a_r_d_a (
     .in(d_r_d_a),
     .clk(clk),
     .enable(a_enable),
     .reset(reset),
     .out(a_r_d_a)
+);
+
+wire [31:0] a_r_d_a_val;
+ff #(.BITS(32)) ff_a_r_d_a_val (
+    .in(d_r_d_a_val),
+    .clk(clk),
+    .enable(a_enable),
+    .reset(reset),
+    .out(a_r_d_a_val)
+);
+
+wire [1:0] a_stld_size;
+ff #(.BITS(2)) ff_a_stld_size (
+	.in(stld_size),
+	.clk(clk),
+	.enable(d_enable),
+	.reset(reset),
+	.out(a_stld_size)
 );
 
 wire a_w;

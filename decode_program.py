@@ -1,4 +1,4 @@
-def to_opcode(opcode):
+def to_opcode(opco  de):
 	if opcode == "add":
 		return "0000000"
 	if opcode == "sub":
@@ -7,14 +7,18 @@ def to_opcode(opcode):
 		return "0000010"
 	if opcode == "ldb":
 		return "0010000"
+    if opcode == "ldh":    
+        return "0010001"
 	if opcode == "ldw":
-		return "0010001"
-	if opcode == "stb":
 		return "0010010"
-	if opcode == "stw":
+	if opcode == "stb":
 		return "0010011"
-	if opcode == "mov":
+	if opcode == "sth":
 		return "0010100"
+    if opcode == "stw":
+        return "0010101"
+	if opcode == "mov":
+		return "0010110"
 	if opcode == "beq":
 		return "0110000"
 	if opcode == "jump":
