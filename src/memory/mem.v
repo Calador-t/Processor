@@ -50,21 +50,21 @@ always @(posedge dmem_write or posedge dmem_read or posedge imem_read or posedge
 	// 	__iwrite_or_read <= 1'b1;
 	// 	iwait_cycles = 0;
 	// end else 
-	if (imem_read) begin	
-        $display("READING Imem ADDRESS %d", imem_address);
+	if (imem_read) begin
+        // $display("READING Imem ADDRESS %d", imem_address);
 		__imem_a_buffer <= imem_address;
 		__iwrite_or_read <= 1'b0;
 		iwait_cycles = 0;
 	end
 	
 	if(dmem_write) begin
-		$display("WRITING mem ADDRESS %d", dmem_w_address);
+		// $display("WRITING mem ADDRESS %d", dmem_w_address);
 		__dmem_in_d_buffer <= dmem_in_data;
 		__dmem_w_a_buffer <= dmem_w_address;
 		__dwrite_or_read <= 1'b1;
 		dwait_cycles = 0;
 	end else if (dmem_read) begin	
-        $display("READING Dmem ADDRESS %d", dmem_r_address);
+        // $display("READING Dmem ADDRESS %d", dmem_r_address);
 		__dmem_r_a_buffer <= dmem_r_address;
 		__dwrite_or_read <= 1'b0;
 		dwait_cycles = 0;
@@ -116,3 +116,42 @@ always @(posedge clk) begin
 end     
 
 
+task print_memory();
+	begin
+		$display("Memory:");
+		for(i = 0; i < 128; i += 1) begin
+			// ignore empty memory
+			if (~(__mem_data[i] === 128'bx)) begin
+				//$display("    %h: %h|%h|%h|%h", i[6:0], __mem_data[i][127:96], __mem_data[i][95:64], __mem_data[i][63:32], __mem_data[i][31:0]);
+				$display("    %h: %h|%h|%h|%h|%h | %h|%h|%h|%h|%h | %h|%h|%h|%h|%h | %h|%h|%h|%h|%h", 
+					i[6:0],
+					__mem_data[i][(96 + 25) +: 7], // Opcode
+					__mem_data[i][(96 + 20) +: 5], // Dst
+					__mem_data[i][(96 + 15) +: 5], // Src1
+					__mem_data[i][(96 + 10) +: 5], // Src2
+					__mem_data[i][96 +: 10],	// Rest
+
+					__mem_data[i][(64 + 25) +: 7], // Opcode
+					__mem_data[i][(64 + 20) +: 5], // Dst
+					__mem_data[i][(64 + 15) +: 5], // Src1
+					__mem_data[i][(64 + 10) +: 5], // Src2
+					__mem_data[i][64 +: 10],	// Rest
+
+					__mem_data[i][(32 + 25) +: 7], // Opcode
+					__mem_data[i][(32 + 20) +: 5], // Dst
+					__mem_data[i][(32 + 15) +: 5], // Src1
+					__mem_data[i][(32 + 10) +: 5], // Src2
+					__mem_data[i][32 +: 10],	// Rest
+
+					__mem_data[i][(0 + 25) +: 7], // Opcode
+					__mem_data[i][(0 + 20) +: 5], // Dst
+					__mem_data[i][(0 + 15) +: 5], // Src1
+					__mem_data[i][(0 + 10) +: 5], // Src2
+					__mem_data[i][0 +: 10],	// Rest
+				);
+			end
+			//$display("   %h|%h|%h|%h", __mem_data[i][]);
+		end
+		$display("");
+	end
+endtask

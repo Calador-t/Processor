@@ -1,5 +1,5 @@
 wire a_enable = 1; // TODO make wire
-assign a_enable = ~(c_wait); 
+assign a_enable = ~(t_wait || c_wait); 
 
 
 wire [31:0] a_pc;
@@ -87,7 +87,17 @@ ff #(.BITS(1)) ff_a_jump (
     .out(a_jump)
 );
 
-reg a_nop_in = 0;
+wire [4:0] a_tail;
+ff #(.BITS(5)) ff_a_tail (
+    .in(d_tail),
+    .clk(clk),
+    .enable(a_enable),
+    .reset(reset),
+    .out(a_tail)
+);
+
+
+reg a_nop_in = 1;
 wire a_nop;
 ff #(.BITS(1)) ff_a_nop (
     .in(d_nop || a_nop_in),
@@ -102,7 +112,10 @@ reg a_wait = 0;
 
 // 0: ADD, 1: SUB, 2: MUL, 3: beq => ret 1, 4: jump
 always @(posedge clk or posedge reset) begin
-	if (reset == 0) begin
+	if (reset) begin
+        a_nop_in = 1;
+    end else begin
+        a_nop_in = 0;
 		#0.3
         // $display("D_NOP %d, A_NOP %d", d_nop, a_nop_in); 
 		if (d_func == 0) begin

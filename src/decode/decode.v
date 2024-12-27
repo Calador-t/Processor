@@ -1,6 +1,6 @@
 
 wire d_enable = 1; // TODO make wire
-assign d_enable = ~( a_wait || c_wait); 
+assign d_enable = ~( a_wait || t_wait || c_wait); 
 
 wire [31:0] d_pc;
 ff #(.BITS(32)) ff_d_pc (
@@ -101,7 +101,17 @@ ff #(.BITS(32)) ff_d_r_b(
 	.out(d_r_b)
 );
 
-reg d_nop_in = 0;
+wire [4:0] d_tail;
+ff #(.BITS(5) ) ff_d_tail (
+	.in(f_tail),
+	.clk(clk),
+	.enable(d_enable),
+	.reset(reset),
+	.out(d_tail)
+);
+
+
+reg d_nop_in = 1;
 wire d_nop;
 ff #(.BITS(1)) ff_d_nop (
 	.in(f_nop || d_nop_in),
@@ -111,17 +121,20 @@ ff #(.BITS(1)) ff_d_nop (
 	.out(d_nop)
 );
 
+
 reg d_wait = 0;
 
 
 
 always @(posedge clk or posedge reset) begin
 	if (reset) begin
-		f_nop_in = 0;
+		d_nop_in = 1;
 	end else begin
 		#0.05 // reset wait & nop to nood need overrite when it is 0
-		d_wait = 0;
 		d_nop_in = 0;
+		#0.01
+		d_wait = 0;
+		
 		#0.05
 		d_func_in <= calc_func(f_instr[31:25]);
 		#0.01
@@ -153,7 +166,7 @@ always @(posedge clk or posedge reset) begin
 		if (d_is_store_in) begin // STW, we need memory address from 
 			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); //[stld_size_in:0]; //Destination
 		end 
-		$display("SIZE %d FUNC %d", stld_size_in, d_func_in);
+		//$display("SIZE %d FUNC %d", stld_size_in, d_func_in);
 		// $display("D_NOPIN %d, F_NOP %d", d_nop_in, f_nop); 
 		// $display("D_NOP %d, F_NOP %d", d_nop, f_nop); 
 
