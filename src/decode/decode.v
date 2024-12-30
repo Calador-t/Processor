@@ -71,9 +71,9 @@ ff #(.BITS(1)) ff_d_is_store(
 	.out(d_is_store)
 );
 
-wire [5:0] d_func;
-reg [5:0] d_func_in;
-ff #(.BITS(6)) ff_d_func(
+wire [6:0] d_func;
+reg [6:0] d_func_in;
+ff #(.BITS(7)) ff_d_func(
 	.in(d_func_in),
 	.clk(clk),
 	.enable(d_enable),
@@ -101,6 +101,16 @@ ff #(.BITS(32)) ff_d_r_b(
 	.out(d_r_b)
 );
 
+reg [4:0] d_exception_in = 0; // 0 itlb miss, 1 dtlb miss, ...
+wire [4:0] d_exception;
+ff #(.BITS(5)) ff_d_exception (
+	.in(f_exception),
+	.clk(clk),
+	.enable(d_enable),
+	.reset(reset),
+	.out(d_exception)
+);
+
 reg d_nop_in = 0;
 wire d_nop;
 ff #(.BITS(1)) ff_d_nop (
@@ -116,28 +126,34 @@ reg d_wait = 0;
 
 
 always @(posedge clk or posedge reset) begin
+	#0.01
 	if (reset) begin
 		f_nop_in = 0;
-	end else begin
+	end else if (f_nop == 0) begin
 		#0.05 // reset wait & nop to nood need overrite when it is 0
 		d_wait = 0;
 		d_nop_in = 0;
 		#0.05
 		d_func_in <= calc_func(f_instr[31:25]);
+		$display("FUNC REGION, %b", f_instr[31:25] );
 		#0.01
-
 		d_r_d_a_in <= f_instr[24:20]; //Destination
 		d_is_load_in <= (f_instr[31:25] == 'h10 || f_instr[31:25] == 'h11 || f_instr[31:25] == 'h12);
 		d_is_store_in <= (f_instr[31:25] == 'h13 || f_instr[31:25] == 'h14 || f_instr[31:25] == 'h15);
-		d_r_a_in <= try_bypass(f_instr[19:15]); //SRC1
+		if (d_func_in == 17) begin
+			d_r_a_in <= f_instr[19:0]; // LI WE WANT LITERAL
+		end else begin
+			d_r_a_in <= try_bypass(f_instr[19:15]); //SRC1
+			if (f_instr[31:29] == 1) begin
+				d_r_b_in <= f_instr[14:0];
+			end
+		end
 		d_w_in <= needs_write(f_instr[31:25]);
 		if (f_instr[31:29] == 0) begin
 			d_r_b_in <= try_bypass(f_instr[14:10]);
 		end
 		// Put offset in r_b
-		else if (f_instr[31:29] == 1) begin
-			d_r_b_in <= f_instr[14:0];
-		end
+		
 		else begin		
 			d_r_b_in <= {f_instr[24:20], f_instr[14:0]};
 		end
@@ -152,17 +168,25 @@ always @(posedge clk or posedge reset) begin
 		#0.01
 		if (d_is_store_in) begin // STW, we need memory address from 
 			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); //[stld_size_in:0]; //Destination
-		end 
-		$display("SIZE %d FUNC %d", stld_size_in, d_func_in);
+		end
+		if (d_func_in == 31) begin //special function for this....
+			d_is_load_in <= 0;
+			d_is_store_in <= 0;
+			d_w_in <= 0;
+			d_r_d_a_in <= 5'b1;
+		end
 		// $display("D_NOPIN %d, F_NOP %d", d_nop_in, f_nop); 
 		// $display("D_NOP %d, F_NOP %d", d_nop, f_nop); 
-
+		if (f_exception != 0) begin
+			$display("Exception in decode!");
+			f_nop_in <= 1;
+		end
 	end
 end
 
 // 0: ADD, 1: SUB, 2: MUL, 3: beq => ret 1, 4: jump
-function [5:0] calc_func;
-	input [5:0] op;
+function [6:0] calc_func;
+	input [6:0] op;
 	begin
 		if (op == 'h1)
 			calc_func = 1; //SUB
@@ -184,6 +208,16 @@ function [5:0] calc_func;
 			calc_func = 14; //STH
 		else if (op == 'h15) 
 			calc_func = 15; //STW
+		else if (op == 'h16)
+			calc_func = 16; //MOV
+		else if (op == 'h17) 
+			calc_func = 17; //LI
+		else if (op == 'h32) 
+			calc_func = 32; // TLBWRITE
+		else if (op == 'h33)
+			calc_func = 33; // IRET
+		else if (op == 'h34)
+			calc_func = 34; // SPECIAL ADD FOR REGISTERS
 		else
 			calc_func = 0; //ADD
 	end
@@ -192,7 +226,7 @@ endfunction
 // Tries to get vlaue if not possible stalls (set wait to true)
 function [32:0] try_bypass;
 	input [4:0] adr;
-	begin
+	if (d_func_in != 32 && d_func_in != 33) begin
 		if (d_nop == 0 && adr == d_r_d_a) begin
 			// Dependency from decode no bypass possible
 			$display("  Stall %h: RAW r%0d unresolvable from decode", f_pc[11:0], adr);
@@ -230,7 +264,7 @@ endfunction
 function needs_write;
 	input [5:0] op;
 	begin 
-		if ((op == 'h12) || (op == 'h13) || (op == 'h30) || (op == 'h31) || (op == 'h32) || (op == 'h33)) begin
+		if ((op == 'h13) || (op == 'h14) || (op == 'h15) || (op == 'h30) || (op == 'h31) || (op == 'h32) || (op == 'h33)) begin
 			needs_write = 0;
 		end else	
 			needs_write = 1;

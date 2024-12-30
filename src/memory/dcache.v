@@ -10,7 +10,6 @@ reg dcache_write;
 reg [31:0] d_addr;
 integer dcache_index; // dcache index derived from address
 
-
 reg c_enable = 1;
 
 wire [31:0] c_pc;
@@ -64,10 +63,54 @@ ff #(.BITS(1)) ff_c_nop (
 
 reg c_wait = 0;
 
-always @(posedge clk or posedge reset) begin
+wire c_swap_rm4;
+ff #(.BITS(1)) ff_c_swap_rm4 (
+    .in(a_swap_rm4),
+    .clk(clk),
+    .enable(c_enable),
+    .reset(reset),
+    .out(c_swap_rm4)
+);
+
+reg [4:0] c_exception_in = 0; // 0 itlb miss, 1 dtlb miss, ...
+wire [4:0] c_exception;
+ff #(.BITS(5)) ff_c_exception (
+	.in(a_exception),
+	.clk(clk),
+	.enable(c_enable),
+	.reset(reset),
+	.out(c_exception)
+);
+
+
+always @(posedge clk) begin // exception
+    #0.01
+    if (a_exception != 0) begin
+        f_nop_in <= 1;
+        d_nop_in <= 1;
+        a_nop_in <= 1;
+        $display("Dcache noping");
+    end
+end
+
+always @(posedge clk) begin // jump logic
+    #0.2
+    // $display("CCACHE SWAP %h", a_swap_rm4);
     pc_jump <= a_jump;
     if (a_jump && a_nop == 0) begin
         pc_in <= a_res;
+        // nop everything older and reset nop in programcounter
+        a_nop_in <= 1;
+        d_nop_in <= 1;
+        f_nop_in <= 1;
+        // f_wait <= 1;
+        #0.001 
+        $display("CACHE Jumping now to! %h", a_res_in);
+        if (a_swap_rm4) begin
+            $display("IRET RM1 %d", rm1);
+            // pc_in <= rm1;
+            rm4 <= 0;     
+        end
     end
 end
 
@@ -78,30 +121,19 @@ always @(posedge reset) begin
         dcache_tags[i] <= 24'bx;
         dcache_data[i] <= 128'bx;
     end
-    dcache_read = 0;
+    dcache_read <= 0;
+    dmem_read <= 0;
+    dmem_write <=0;
 end
 
+reg dhit = 0;
 
-always @(posedge clk or posedge reset) begin
-    // $display("A RES %d", a_res);
-    // $display("C RES %d", c_res);
-    // $display("C RESIN %d", );
+
+always @(posedge clk) begin
     #0.1
-    // $display("ENABLE %d, NOP %d, WAIT %d, STORE %d, LOAD %d", c_enable, a_nop, c_wait, a_is_store, a_is_load);
-    if (reset) begin
-        dcache_read <= 0;
-        dmem_read <= 0;
-        dmem_write <=0;
-    end
-    else if (!a_nop) begin
-        // $display("in hereh");   
+    if (!a_nop) begin
         if (c_wait) begin
-            // $display("in hereh2");
-            // $display("D_ADDR %d, WAIT %d", d_addr, c_wait);
-            // $display("Reading from DMEM ");
             if (dmem_finished) begin
-                // $display("Reading from DMEM Finished %d", out_dmem);
-                
                 dcache_tags[d_addr[3:2]] <= d_addr[31:6]; 
                 dcache_data[d_addr[3:2]] <= out_dmem;
                 dcache_valid[d_addr[3:2]] <= 1;
@@ -134,9 +166,7 @@ always @(posedge clk or posedge reset) begin
             end
         end else if (a_is_load || a_is_store) begin 
             d_addr <= a_res;
-            // #0.01
-            // $display("D_ADDR %d, WAIT %d", d_addr, c_wait);
-            hit <= (dcache_valid[d_addr[5:4]] && dcache_tags[d_addr[5:4]] == d_addr[31:6]);
+            dhit <= (dcache_valid[d_addr[5:4]] && dcache_tags[d_addr[5:4]] == d_addr[31:6]);
             #0.01
             if (hit) begin
                 $display("DCACHE HIT size %d", a_stld_size);
@@ -171,10 +201,8 @@ always @(posedge clk or posedge reset) begin
                 dmem_read <= 1;
                 c_wait <= 1;
                 c_nop_in <= 1;
-                // $display("DCHACHE MISS");
             end
         end else begin
-            // $display("here %d", c_enable);
             c_res_in <= a_res;
         end
     end

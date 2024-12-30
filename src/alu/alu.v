@@ -82,7 +82,7 @@ reg a_jump_in;
 ff #(.BITS(1)) ff_a_jump (
     .in(a_jump_in),
     .clk(clk),
-    .enable(wb_enable),
+    .enable(a_enable),
     .reset(reset),
     .out(a_jump)
 );
@@ -97,14 +97,43 @@ ff #(.BITS(1)) ff_a_nop (
     .out(a_nop)
 );
 
+reg a_swap_rm4_in = 0;
+wire a_swap_rm4;
+ff #(.BITS(1)) ff_a_swap_rm4 (
+    .in(a_swap_rm4_in),
+    .clk(clk),
+    .enable(a_enable),
+    .reset(reset),
+    .out(a_swap_rm4)
+);
+
+reg [4:0] a_exception_in = 0; // 0 itlb miss, 1 dtlb miss, ...
+wire [4:0] a_exception;
+ff #(.BITS(5)) ff_a_exception (
+	.in(d_exception),
+	.clk(clk),
+	.enable(a_enable),
+	.reset(reset),
+	.out(a_exception)
+);
+
 reg a_wait = 0;
 
 
 // 0: ADD, 1: SUB, 2: MUL, 3: beq => ret 1, 4: jump
 always @(posedge clk or posedge reset) begin
-	if (reset == 0) begin
+    #0.01
+    a_nop_in <= 0;
+    a_swap_rm4_in <= 0;
+    a_jump_in <= 0;
+    // $display("ALU NOP %h", d_nop);
+    if (d_exception != 0) begin
+		f_nop_in <= 1;
+        d_nop_in <= 1;
+	end
+    
+	if (reset == 0 && !d_nop) begin
 		#0.3
-        // $display("D_NOP %d, A_NOP %d", d_nop, a_nop_in); 
 		if (d_func == 0) begin
 			a_res_in = d_r_a + d_r_b;
             a_jump_in = 0;
@@ -126,6 +155,7 @@ always @(posedge clk or posedge reset) begin
             //$display("Beq val %0d", a_jump_in);
 		end else if (d_func == 4) begin
             // d_r_b is offset
+            $display("ALU jump");
             a_res_in <= d_r_d_a + $signed(d_r_b);
             a_jump_in = 1;
         end else if (d_func == 5) begin
@@ -133,6 +163,26 @@ always @(posedge clk or posedge reset) begin
         end else if (d_func == 6) begin
             // a_res_in = d_r_a + $signed(d_r_b);
             // a_r_d_a <= d_r_a; // Move real destination
+        end else if (d_func == 17) begin
+            a_res_in <= d_r_a;
+        end else if (d_func == 32) begin //TLBWRITE
+            if (rm4) begin
+                itlb_vpns[itlb_tail] <= rm1;
+                itlb_ppns[itlb_tail] <= rm1[31:12] + 'h8000;
+                itlb_valids[itlb_tail] = 1'b0;
+                itlb_page_protections[itlb_tail] <= 'b11;
+                #0.01
+                $display("TLBWRITE index %h, iaddr %h, paddr %h", itlb_tail, itlb_vpns[itlb_tail], itlb_ppns[itlb_tail]);
+                itlb_tail <= (itlb_tail + 1) % 20;
+            end else begin
+                $display("UNPRIVILEGED TLBWRITE");
+            end
+        end else if (d_func == 33) begin
+            a_swap_rm4_in <= 1;
+            a_jump_in <= 1;
+            a_res_in <= rm1;
+            $display("IRET, SWAPPING rm4 and JUMPING");
+
 		end else begin
             a_res_in = 0;
             a_jump_in = 0;

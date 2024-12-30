@@ -1,6 +1,3 @@
-`include "fetch/programcounter.v"
-`include "fetch/instruction_cache.v"
-
 assign reset_pc = reset;
 // if 
 assign f_enable = ~(d_wait || a_wait || c_wait);
@@ -12,6 +9,15 @@ reg [31:0] memory [0:1023];
 
 wire f_enable = 1;
 
+reg [4:0] f_exception_in = 0; // 1 itlb miss, 2 dtlb miss, ...
+wire [4:0] f_exception;
+ff #(.BITS(5)) ff_f_exception (
+	.in(f_exception_in),
+	.clk(clk),
+	.enable(f_enable),
+	.reset(reset),
+	.out(f_exception)
+);
 
 reg [31:0] f_instr_input;
 wire [31:0] f_instr;
@@ -44,34 +50,35 @@ ff #(.BITS(1)) ff_f_nop (
 
 reg f_wait = 0;
 
-reg hit = 0;
-
-initial begin 
-	// Load instructions into memory here or use an external file.
-	$readmemb("memory/memory.bin", __mem_data);
-end
-
 always @(posedge clk or posedge reset) begin
+	f_nop_in <= 0;
+	f_exception_in <= 0;
+	#0.01
     if (reset) begin
 		$display("reset");
         f_wait <= 0;
         imem_read <= 0;
         f_instr_input <= 32'bx; // Clear instruction register
 		f_nop_in = 1;
+
     end else if (!f_wait) begin // Look into cache
-		// $display("Forwarding to cache");
+		$display("Forwarding to tlb");
 		#0.01
-		iaddr <= pc;
-		icache_read <= 1;
+		itlb_va <= pc;
+		itlb_read <= 1;
+		$display("FETCH Rm4 %d fNop %d fenable %d", rm4, f_nop_in, f_enable);
+
 	end else if (imem_read) begin  // getting from mem currently
 		if (imem_finished) begin // finished mem look
-			// $display("Reading from memory finished");
+			$display("Reading from memory finished");
             icache_write <= 1;
 		end else begin // keep looking
-			// $display("Reading from memory");
+			$display("Reading from memory");
+			f_nop_in = 1;
+			f_wait = 1;
 		end
 	end else begin
-		// $display("Else branch %d", imem_read);
+		$display("Else branch %d", imem_read);
 		f_nop_in = 1;
 		f_wait = 1;
 	end
