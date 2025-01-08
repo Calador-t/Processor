@@ -93,9 +93,7 @@ for line in file:
             binary += to_opcode(word)
         if i == 1:
             if oc == "li":
-                print(word)
                 src1 = '{0:020b}'.format(int(word))
-                print(src1)
             else:
                 src1 = to_reg(word, i)
         if i == 2:
@@ -113,8 +111,8 @@ for line in file:
                 dst = big_offset[0:5]
                 offset = big_offset[5:]
         if i == 3:
-            if it == "B":
-                raise SystemExit("Error: oc not 7b: " + line)
+#            if it == "B":
+#                raise SystemExit("Error: oc not 7b: " + line)
             dst = to_reg(word, it)
     # --- Make result string ---
     if len(binary) != 7:
@@ -137,7 +135,6 @@ for line in file:
     	raise SystemExit("Error: offset not 15b: " + line)
     if it == "B" and len(big_offset) != 20:	
     	raise SystemExit("Error: big_offset not 20b: " + line + " big_offset: " + big_offset)
-    print(len(binary))
     if len(binary) != 32:	
     	raise SystemExit("Error: Code for inst " + line + " not 32 bits long")
     if it == "R":

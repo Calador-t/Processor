@@ -11,8 +11,6 @@ ff #(.BITS(32)) ff_a_pc (
     .out(a_pc)
 );
 
-
-
 wire [4:0] a_r_d_a;
 ff #(.BITS(5)) ff_a_r_d_a (
     .in(d_r_d_a),
@@ -122,7 +120,7 @@ reg a_wait = 0;
 
 // 0: ADD, 1: SUB, 2: MUL, 3: beq => ret 1, 4: jump
 always @(posedge clk or posedge reset) begin
-    #0.01
+    #0.1
     a_nop_in <= 0;
     a_swap_rm4_in <= 0;
     a_jump_in <= 0;
@@ -144,7 +142,7 @@ always @(posedge clk or posedge reset) begin
             a_res_in = d_r_a * d_r_b;
             a_jump_in = 0;
         end else if (d_func == 3) begin
-            if (d_r_a == 0) begin
+            if (d_r_a - d_r_d_a_val == 0) begin
                 // d_r_b is offset
                 a_res_in = d_r_b;
                 a_jump_in = 1;
@@ -163,25 +161,38 @@ always @(posedge clk or posedge reset) begin
         end else if (d_func == 6) begin
             // a_res_in = d_r_a + $signed(d_r_b);
             // a_r_d_a <= d_r_a; // Move real destination
-        end else if (d_func == 17) begin
+        end else if (d_func == 17 || d_func == 12) begin
             a_res_in <= d_r_a;
+            $display("Loading! %d", d_r_a);
         end else if (d_func == 32) begin //TLBWRITE
             if (rm4) begin
-                itlb_vpns[itlb_tail] <= rm1;
-                itlb_ppns[itlb_tail] <= rm1[31:12] + 'h8000;
-                itlb_valids[itlb_tail] = 1'b0;
-                itlb_page_protections[itlb_tail] <= 'b11;
-                #0.01
-                $display("TLBWRITE index %h, iaddr %h, paddr %h", itlb_tail, itlb_vpns[itlb_tail], itlb_ppns[itlb_tail]);
-                itlb_tail <= (itlb_tail + 1) % 20;
+                if (d_r_d_a == 0) begin
+                    itlb_vpns[itlb_tail] <= rm1[31:12];
+                    itlb_ppns[itlb_tail] <= rm1[31:12] + 'h8000;
+                    itlb_valids[itlb_tail] = 1'b0;
+                    itlb_page_protections[itlb_tail] <= 'b11;
+                    #0.01
+                    $display("TLBWRITE index %h, iaddr %h, paddr %h", itlb_tail, itlb_vpns[itlb_tail], itlb_ppns[itlb_tail]);
+                    itlb_tail <= (itlb_tail + 1) % 20;
+                end else begin
+                    $display("rm1 %d rm0 %d", rm1, rm0);
+                    dtlb_vpns[dtlb_tail] <= rm1[31:12];
+                    dtlb_ppns[dtlb_tail] <= rm1[31:12] + 'h8000;
+                    dtlb_valids[dtlb_tail] = 1'b0;
+                    dtlb_page_protections[dtlb_tail] <= 'b11;
+                    #0.01
+                    $display("DTLBWRITE index %d, d_addr %d, paddr %d", dtlb_tail, dtlb_vpns[dtlb_tail], dtlb_ppns[dtlb_tail]);
+                    #0.1
+                    dtlb_tail <= (dtlb_tail + 1) % 20;
+                end
             end else begin
                 $display("UNPRIVILEGED TLBWRITE");
             end
         end else if (d_func == 33) begin
             a_swap_rm4_in <= 1;
             a_jump_in <= 1;
-            a_res_in <= rm1;
-            $display("IRET, SWAPPING rm4 and JUMPING");
+            a_res_in <= rm0;
+            $display("IRET, SWAPPING rm4 and JUMPING TO rm0");
 
 		end else begin
             a_res_in = 0;

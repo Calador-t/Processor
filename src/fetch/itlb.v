@@ -37,41 +37,44 @@ always @(posedge reset) begin
 end
 
 always @(posedge itlb_read) begin
-    #0.2
+    #0.3
     itlb_read <= 0;
-    $display("ITLB Rm4 %d fNop %d fenable %d", rm4, f_nop_in, f_enable);
     if (!f_nop_in) begin
         if (!rm4 ) begin
             itlb_hit <= 0;
             #0.01
             for (i = 0; i < 20; i = i + 1) begin 
-                if (itlb_vpns[i] == itlb_va) begin
+                // $display("iaddr %h, paddr %h, want %h", itlb_vpns[i], itlb_ppns[i], itlb_va);
+                // $display("%h", itlb_vpns[i] - itlb_va[31:12]==0);
+                if (itlb_vpns[i] - itlb_va[31:12] == 0) begin
+                    // $display("Here!");
                     itlb_hit <= 1;
-                    iaddr <= itlb_ppns[i];
+                    iaddr <= itlb_ppns[i] + itlb_va[11:0];
                 end
             end
             #0.01
 
-            if (hit) begin
+            if (itlb_hit) begin
                 icache_read <= 1;
-                #0.1
-                $display("ITLB HIT, addr at itlb before %h, after %h", itlb_va, iaddr);
+                // #0.1
+                // $display("ITLB HIT, addr at itlb before %h, after %h", itlb_va, iaddr);
             end else begin
                 $display("ITLB MISS");
                 if (f_exception_in == 0) begin
                     irm0 <= pc; // Save faulting PC
                     irm1 <= pc; // Save faulting memory @
                     f_exception_in <= 1;
-                end else begin
-                    $display("Already exception in iTLB, we will be coming back");
-                end
+                end 
+                // else begin
+                    // $display("Already exception in iTLB, we will be coming back");
+                // end
             end
         end else begin 
             iaddr <= itlb_va;
             icache_read <= 1;
             itlb_read <= 0;
-            #0.1
-            $display("OFF addr at itlb %h", iaddr);
+            // #0.1
+            // $display("OFF addr at itlb %h", iaddr);
         end
     end
 end

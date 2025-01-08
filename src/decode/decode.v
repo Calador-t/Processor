@@ -126,37 +126,44 @@ reg d_wait = 0;
 
 
 always @(posedge clk or posedge reset) begin
-	#0.01
+	#0.41
 	if (reset) begin
 		f_nop_in = 0;
 	end else if (f_nop == 0) begin
 		#0.05 // reset wait & nop to nood need overrite when it is 0
 		d_wait = 0;
 		d_nop_in = 0;
+		
 		#0.05
 		d_func_in <= calc_func(f_instr[31:25]);
-		$display("FUNC REGION, %b", f_instr[31:25] );
 		#0.01
+
 		d_r_d_a_in <= f_instr[24:20]; //Destination
+
 		d_is_load_in <= (f_instr[31:25] == 'h10 || f_instr[31:25] == 'h11 || f_instr[31:25] == 'h12);
 		d_is_store_in <= (f_instr[31:25] == 'h13 || f_instr[31:25] == 'h14 || f_instr[31:25] == 'h15);
+
 		if (d_func_in == 17) begin
 			d_r_a_in <= f_instr[19:0]; // LI WE WANT LITERAL
 		end else begin
+			$display("Trying bypass d_r_a");
 			d_r_a_in <= try_bypass(f_instr[19:15]); //SRC1
+			#0.1
+			$display("HE In decode d_r_a_in %d %d", d_r_a_in, d_enable);	
 			if (f_instr[31:29] == 1) begin
 				d_r_b_in <= f_instr[14:0];
 			end
 		end
+
 		d_w_in <= needs_write(f_instr[31:25]);
-		if (f_instr[31:29] == 0) begin
+		if (d_func_in == 3) begin
+			d_r_b_in <= f_instr[14:0];
+		end if (f_instr[31:29] == 0) begin
 			d_r_b_in <= try_bypass(f_instr[14:10]);
-		end
-		// Put offset in r_b
-		
-		else begin		
+		end else begin		
 			d_r_b_in <= {f_instr[24:20], f_instr[14:0]};
 		end
+
 		#0.01
 		if (d_func_in == 13 || d_func_in == 10) begin
 			stld_size_in <= 8;
@@ -168,19 +175,16 @@ always @(posedge clk or posedge reset) begin
 		#0.01
 		if (d_is_store_in) begin // STW, we need memory address from 
 			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); //[stld_size_in:0]; //Destination
+		end else if (d_func_in == 3) begin
+			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); // Store second operand for comp
 		end
-		if (d_func_in == 31) begin //special function for this....
-			d_is_load_in <= 0;
-			d_is_store_in <= 0;
-			d_w_in <= 0;
-			d_r_d_a_in <= 5'b1;
-		end
-		// $display("D_NOPIN %d, F_NOP %d", d_nop_in, f_nop); 
-		// $display("D_NOP %d, F_NOP %d", d_nop, f_nop); 
+
 		if (f_exception != 0) begin
 			$display("Exception in decode!");
 			f_nop_in <= 1;
 		end
+		#0.01
+		$display("In decode d_r_a_in %d", d_r_a_in);
 	end
 end
 
@@ -237,6 +241,7 @@ function [32:0] try_bypass;
 			// Try bypass from alu first
 			if (a_is_load == 0) begin
 				try_bypass = a_res;
+				$display(" Bypass %h: Decode Bypass from ALU got %d", f_pc[11:0], try_bypass);
 			end
 			else begin
 				// value not ready yet, wait
@@ -249,6 +254,7 @@ function [32:0] try_bypass;
 			// try bypass from cache
 			if (c_nop == 0) begin
 				try_bypass = c_res;
+				$display(" Decode Bypass from Cache");
 			end else begin
 				d_nop_in = 1;
 				d_wait = 1;
@@ -257,6 +263,7 @@ function [32:0] try_bypass;
 			end
 		end else
 			// No bypass, so hoppfully reg value is "correct" for this instr
+			$display(" Bypass %h: Decode Value from Regs adr %d is %d", f_pc[11:0], adr, rgs_out[adr]);
 			try_bypass = rgs_out[adr];
 	end
 endfunction

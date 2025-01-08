@@ -35,12 +35,13 @@ reg [127:0] __mem_data [50000:0];
 
 initial begin
 	// Load instructions into memory here or use an external file.
-	$readmemb("fetch/instructions.bin", __mem_data, 2048, 3000);
+	$readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
 end
 
 
 always @(posedge reset or posedge mem_reset) begin
 	integer i;
+	integer j;
 	iwait_cycles = -1;
 	dmem_read <= 0;
 	dmem_write <= 0;
@@ -53,6 +54,24 @@ always @(posedge reset or posedge mem_reset) begin
 
 	// CURRENTLY JUST HAVE TLBWRITE WHICH ADDS THE 8000 AUTOMATICALLY AND IRET AT THE EXCEPTION PLACE
 	__mem_data[512] = 128'b00000000000000000000000000000000000000000000000000000000000000000110011000000000000000000000000001100100000000000000000000000000;
+	// DEST 1 FOR DTLB WRITE
+	__mem_data[513] = 128'b00000000000000000000000000000000000000000000000000000000000000000110011000000000000000000000000001100100000100000000000000000000;
+
+	// FOR TESTS STORE A[128] AT 9k hex => 9215
+	// Store 128 32-bit words with value 1
+    for (j = 2112; j < 2112+128; j = j + 1) begin // A[128] = [1,1,1,...]
+      __mem_data[j][31:0]   = 32'h1;
+      __mem_data[j][63:32]  = 32'h1;
+      __mem_data[j][95:64]  = 32'h1;
+      __mem_data[j][127:96] = 32'h1;
+    end
+
+	for (j = 9343; j < 9471; j = j + 1) begin // B[128] = [1,1,1,...]
+      __mem_data[j][31:0]   = 32'h1;
+      __mem_data[j][63:32]  = 32'h1;
+      __mem_data[j][95:64]  = 32'h1;
+      __mem_data[j][127:96] = 32'h1;
+    end
 end
 
 
@@ -71,20 +90,20 @@ always @(posedge dmem_write or posedge dmem_read or posedge imem_read) begin
 	// 	iwait_cycles = 0;
 	// end else 
 	if (imem_read) begin	
-        $display("READING Imem ADDRESS %h", imem_address);
+        $display("READING Imem ADDRESS %d", imem_address);
 		__imem_a_buffer <= imem_address;
 		__iwrite_or_read <= 1'b0;
 		iwait_cycles = 0;
 	end
 	
 	if(dmem_write) begin
-		$display("WRITING mem ADDRESS %h", dmem_w_address);
+		$display("WRITING mem ADDRESS %d", dmem_w_address);
 		__dmem_in_d_buffer <= dmem_in_data;
 		__dmem_w_a_buffer <= dmem_w_address;
 		__dwrite_or_read <= 1'b1;
 		dwait_cycles = 0;
 	end else if (dmem_read) begin	
-        $display("READING Dmem ADDRESS %h", dmem_r_address);
+        $display("READING Dmem ADDRESS %d", dmem_r_address);
 		__dmem_r_a_buffer <= dmem_r_address;
 		__dwrite_or_read <= 1'b0;
 		dwait_cycles = 0;

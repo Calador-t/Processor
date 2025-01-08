@@ -72,10 +72,10 @@ ff #(.BITS(1)) ff_c_swap_rm4 (
     .out(c_swap_rm4)
 );
 
-reg [4:0] c_exception_in = 0; // 0 itlb miss, 1 dtlb miss, ...
+reg [4:0] c_exception_in = 0; // 1 itlb miss, 2 dtlb miss, ...
 wire [4:0] c_exception;
 ff #(.BITS(5)) ff_c_exception (
-	.in(a_exception),
+	.in(c_exception_in),
 	.clk(clk),
 	.enable(c_enable),
 	.reset(reset),
@@ -107,7 +107,12 @@ always @(posedge clk) begin // jump logic
         #0.001 
         $display("CACHE Jumping now to! %h", a_res_in);
         if (a_swap_rm4) begin
-            $display("IRET RM1 %d", rm1);
+            $display("");
+            $display("");
+            $display("");
+            $display("");
+            $display("");
+            $display("");
             // pc_in <= rm1;
             rm4 <= 0;     
         end
@@ -129,81 +134,90 @@ end
 reg dhit = 0;
 
 
-always @(posedge clk) begin
+always @(posedge dcache_read) begin // we get here from dTLB, so we can skip most checks
     #0.1
-    if (!a_nop) begin
-        if (c_wait) begin
-            if (dmem_finished) begin
-                dcache_tags[d_addr[3:2]] <= d_addr[31:6]; 
-                dcache_data[d_addr[3:2]] <= out_dmem;
-                dcache_valid[d_addr[3:2]] <= 1;
-                #0.01
-                if (a_is_load) begin
-                    $display("Loading from %d in dcache byte %d index %d",dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
-                    if (a_stld_size == 32) begin
-                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
-                    end else if (a_stld_size == 16) begin
-                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
-                    end else begin
-                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];
-                    end
-                end
-                if (a_is_store) begin
-                    $display("Storing %d in dcache byte %d index %d",rgs_out[a_r_d_a], d_addr[3:2], d_addr[5:4]);
-                    if (a_stld_size == 32) begin
-                        dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
-                    end else if (a_stld_size == 16) begin
-                        dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16] <= a_r_d_a_val[15:0];
-                    end else begin
-                        dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8] <= a_r_d_a_val[7:0];
-                    end
-                end
-                    
-                c_wait <= 0;
-                dmem_read <= 0;
-                c_nop_in <= 0;
-                dmem_write <= 0;
-            end
-        end else if (a_is_load || a_is_store) begin 
-            d_addr <= a_res;
-            dhit <= (dcache_valid[d_addr[5:4]] && dcache_tags[d_addr[5:4]] == d_addr[31:6]);
-            #0.01
-            if (hit) begin
-                $display("DCACHE HIT size %d", a_stld_size);
-                if (a_is_store) begin
-                    $display("Storing %d in dcache byte %d index %d",rgs_out[a_r_d_a], d_addr[3:2], d_addr[5:4]);
-                    if (a_stld_size == 32) begin
-                        dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
-                    end else if (a_stld_size == 16) begin
-                        dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16] <= a_r_d_a_val[15:0];
-                    end else begin
-                        dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8] <= a_r_d_a_val[7:0];
-                    end
-                end else if (a_is_load) begin
-                    $display("Loading from %d in dcache byte %d index %d",dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
-                    if (a_stld_size == 32) begin
-                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
-                    end else if (a_stld_size == 16) begin
-                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
-                    end else begin
-                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];
-                    end
-                end
+    dhit <= (dcache_valid[d_addr[5:4]] && dcache_tags[d_addr[5:4]] == d_addr[31:6]);
+    #0.01
+    if (dhit) begin
+        $display("DCACHE HIT size %d", a_stld_size);
+        if (a_is_store) begin
+            $display("Storing %d in dcache byte %d index %d",rgs_out[a_r_d_a], d_addr[3:2], d_addr[5:4]);
+            if (a_stld_size == 8) begin
+                dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8] <= a_r_d_a_val[7:0];
+            end else if (a_stld_size == 16) begin
+                dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16] <= a_r_d_a_val[15:0];
             end else begin
-                if (dcache_valid[d_addr[3:2]]) begin 
-                    // miss and need to flush cache 
-                    // this will overlap the read always so no need to sync or anything, maybe implement more coherently when doing reordering and stuff
-                    dmem_in_data <= dcache_data[d_addr[3:2]];
-                    dmem_w_address <= dcache_tags[d_addr[3:2]];
-                    dmem_write <= 1;
-                end
-                dmem_r_address <= d_addr[31:4];
-                dmem_read <= 1;
-                c_wait <= 1;
-                c_nop_in <= 1;
+                dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
             end
-        end else begin
-            c_res_in <= a_res;
+        end else if (a_is_load) begin
+            $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
+            if (a_stld_size == 8) begin
+                c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];                
+            end else if (a_stld_size == 16) begin
+                c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
+            end else begin
+                $display("Here 32 bit load");
+                c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
+            end
         end
+    end else begin
+        if (dcache_valid[d_addr[3:2]]) begin 
+            // miss and need to flush cache 
+            // this will overlap the read always so no need to sync or anything, maybe implement more coherently when doing reordering and stuff
+            dmem_in_data <= dcache_data[d_addr[3:2]];
+            dmem_w_address <= dcache_tags[d_addr[3:2]];
+            dmem_write <= 1;
+        end
+        dmem_r_address <= d_addr[31:4];
+        dmem_read <= 1;
+        c_wait <= 1;
+        c_nop_in <= 1;
+    end
+end
+
+always @(posedge clk) begin
+    #0.001
+    c_exception_in <= a_exception;
+    #0.1
+    if (c_wait) begin
+        if (dmem_finished) begin
+            dcache_tags[d_addr[3:2]] <= d_addr[31:6]; 
+            dcache_data[d_addr[3:2]] <= out_dmem;
+            dcache_valid[d_addr[3:2]] <= 1;
+            #0.01
+            if (a_is_load) begin
+                $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
+                if (a_stld_size == 8) begin
+                    c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];
+                end else if (a_stld_size == 16) begin
+                    c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
+                end else begin
+                    $display("Here 32 bit load");
+                    c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
+                    
+                end
+            end
+            if (a_is_store) begin
+                $display("Storing %d in dcache byte %d index %d",rgs_out[a_r_d_a], d_addr[3:2], d_addr[5:4]);
+                if (a_stld_size == 8) begin
+                    dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8] <= a_r_d_a_val[7:0];
+                end else if (a_stld_size == 16) begin
+                    dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16] <= a_r_d_a_val[15:0];
+                end else begin
+                    dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
+                end
+            end
+                
+            c_wait <= 0;
+            dmem_read <= 0;
+            c_nop_in <= 0;
+            dmem_write <= 0;
+        end
+    end else if ((a_is_load || a_is_store) && !a_nop) begin
+        $display("Sending %d to dTLB", a_res);
+        dtlb_va <= a_res;
+        dtlb_read <= 1;
+    end else begin
+        c_res_in <= a_res;
     end
 end

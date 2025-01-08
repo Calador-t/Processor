@@ -13,7 +13,7 @@ reg [19:0] dtlb_valids;
 reg [2:0] dtlb_page_protections [19:0]; // R,W,RW,EX 
 reg [5:0] dtlb_tail;
 
-reg [31:0] page_table_root_addr;
+// reg [31:0] page_table_root_addr;
 
 // 2 level page table. 2 pages per table.
 
@@ -39,15 +39,15 @@ end
 always @(posedge dtlb_read) begin
     #0.2
     dtlb_read <= 0;
-    $display("dtlb Rm4 %d fNop %d fenable %d", rm4, f_nop_in, f_enable);
     if (!f_nop_in) begin
         if (!rm4 ) begin
             hit <= 0;
             #0.01
             for (i = 0; i < 20; i = i + 1) begin 
-                if (dtlb_vpns[i] == dtlb_va) begin
+                $display("daddr %h, paddr %h, want %h", dtlb_vpns[i], dtlb_ppns[i], dtlb_va);
+                if (dtlb_vpns[i] == dtlb_va[31:12]) begin
                     hit <= 1;
-                    d_addr <= dtlb_ppns[i];
+                    d_addr <= dtlb_ppns[i] + dtlb_va[11:0];
                 end
             end
             #0.01
@@ -55,19 +55,19 @@ always @(posedge dtlb_read) begin
             if (hit) begin
                 dcache_read <= 1;
                 #0.1
-                $display("dtlb HIT, addr at dtlb before %h, after %h", dtlb_va, iaddr);
-            end else begin
-                $display("dtlb MISS");
-                drm0 <= pc; // Save faulting PC
-                drm1 <= pc; // Save faulting memory @
-                f_exception_in <= 1;
+                $display("dtlb HIT, addr at dtlb before %h, after %h", dtlb_va, d_addr);
+            end else if (a_exception == 0) begin
+                drm0 <= a_pc; // Save faulting PC
+                drm1 <= dtlb_va; // Save faulting memory @
+                c_exception_in <= 2;
+                #0.01
+                $display("dtlb MISS setting pc/rm0 to %d and addr to  %d", a_pc, dtlb_va);
             end
         end else begin 
-            iaddr <= dtlb_va;
+            d_addr <= dtlb_va;
             dcache_read <= 1;
-            dtlb_read <= 0;
             #0.1
-            $display("OFF addr at dtlb %h", iaddr);
+            $display("OFF addr at dtlb %h", d_addr);
         end
     end
 end

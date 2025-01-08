@@ -27,6 +27,7 @@ wire [31:0] data = 0;
 `include "memory/dcache.v"
 `include "write_back/write_back.v"
 `include "memory/mem.v"
+`include "memory/dtlb.v"
 `include "fetch/itlb.v"
 `include "fetch/instruction_cache.v"
 `include "fetch/programcounter.v"
@@ -39,7 +40,7 @@ initial begin
 #1 reset = 1;
 #1 reset = 0;
 
-#250 $finish;
+#1000 $finish;
 
 
 
