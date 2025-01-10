@@ -105,10 +105,9 @@ reg t_wait = 0;
 `include "tl/rob.v"
 
 always @(posedge clk or posedge reset) begin
-    #0.1
+    #0.4
     if (~reset && a_nop == 0) begin
-        //$display("write rob: pc %d, tail", a_pc);
-    
+        //$display("write rob: pc %h, tail %d", a_pc[11:0], a_tail);
         write_to_rob(
             a_tail,
             1,

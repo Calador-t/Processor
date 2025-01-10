@@ -128,7 +128,7 @@ always @(posedge cache_finished or posedge reset) begin
 			f_nop_in = 1;
 		end else begin
 			f_tail_ctr_in = f_tail_ctr + 1;
-			if (f_tail_ctr_in >= NUM_ENTRIES)
+			if (f_tail_ctr_in >= ROB_NUM_ENTRIES)
 				f_tail_ctr_in = 0;
 			if (f_tail_ctr_in == rob_head)
 				f_rob_full = 1;

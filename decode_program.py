@@ -1,4 +1,4 @@
-def to_opcode(opco  de):
+def to_opcode(opcode):
 	if opcode == "add":
 		return "0000000"
 	if opcode == "sub":
@@ -7,16 +7,16 @@ def to_opcode(opco  de):
 		return "0000010"
 	if opcode == "ldb":
 		return "0010000"
-    if opcode == "ldh":    
-        return "0010001"
+	if opcode == "ldh":
+		return "0010001"
 	if opcode == "ldw":
 		return "0010010"
 	if opcode == "stb":
 		return "0010011"
 	if opcode == "sth":
 		return "0010100"
-    if opcode == "stw":
-        return "0010101"
+	if opcode == "stw":
+		return "0010101"
 	if opcode == "mov":
 		return "0010110"
 	if opcode == "beq":
@@ -65,11 +65,10 @@ if len(sys.argv) >= 2 and sys.argv[1] != "":
 	file_path = sys.argv[1]
 print("From " + file_path + ":")
 file = open(file_path, 'r+')
-if not os.path.exists('asmbl.bin'):
-    os.mknod('ambl.bin')
-target_file = open('asmbl.bin', 'w');
+target_file = open('src/memory/memory.bin', 'w');
 
-
+out_line_index = 0
+out_line = ""
 for line in file:
 	# Print each line
 	print(line[:-1])
@@ -137,7 +136,14 @@ for line in file:
 		print(binary[0:7] + "|" + binary[7:12] + "|" + binary[12:17] + "|" + binary[17:22] + "|" + binary[22:])
 	else:
 		print(binary[0:7] + "|" + binary[7:12] + "|" + binary[12:17] + "|" + binary[17:])
-	target_file.write(binary + "\n")
+	if out_line_index < 3:
+		out_line = binary + out_line 
+		out_line_index += 1
+	else:
+		out_line = binary + out_line 
+		out_line_index = 0
+		target_file.write(out_line + "\n")
+		out_line = ""
 	print("")
-
-
+if out_line_index > 0:	
+	target_file.write(out_line + "\n")

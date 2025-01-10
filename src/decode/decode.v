@@ -155,6 +155,7 @@ always @(posedge clk or posedge reset) begin
 			d_r_b_in <= {f_instr[24:20], f_instr[14:0]};
 		end
 		#0.01
+		// Calculate size for stores and loads
 		if (d_func_in == 13 || d_func_in == 10) begin
 			stld_size_in <= 8;
 		end else if (d_func_in == 14 || d_func_in == 11) begin
@@ -205,10 +206,21 @@ endfunction
 // Tries to get vlaue if not possible stalls (set wait to true)
 function [32:0] try_bypass;
 	input [4:0] adr;
+	//output [4:0] from;
 	begin
 		if (d_nop == 0 && adr == d_r_d_a) begin
 			// Dependency from decode no bypass possible
 			$display("  Stall %h: RAW r%0d unresolvable from decode", f_pc[11:0], adr);
+			d_nop_in = 1;
+			d_wait = 1;
+			try_bypass = 32'bx;
+		end else if (
+				(adr == m1_r_d_a && m1_nop == 0) || 
+				(adr == m2_r_d_a && m2_nop == 0) || 
+				(adr == m3_r_d_a && m3_nop == 0) || 
+				(adr == m4_r_d_a && m4_nop == 0)
+			) begin
+			$display("  Stall %h: RAW r%0d unresolvable from mul", f_pc[11:0], adr);
 			d_nop_in = 1;
 			d_wait = 1;
 			try_bypass = 32'bx;
@@ -224,7 +236,7 @@ function [32:0] try_bypass;
 				$display("  Stall %h: dependency unresolvable from alu", f_pc[11:0]);
 				try_bypass =  32'bx;
 			end
-		end else if (a_nop == 0 && adr == c_r_d_a && c_w) begin
+		end else if (c_nop == 0 && adr == c_r_d_a && c_w) begin
 			// try bypass from cache
 			if (c_nop == 0) begin
 				try_bypass = c_res;
@@ -234,9 +246,30 @@ function [32:0] try_bypass;
 				$display("  Stall %h: dependency unresolvable from cache", f_pc[11:0]);
 				try_bypass = 32'bx;
 			end
+		end else if (m5_nop == 0 && adr == m5_r_d_a) begin
+			// try bypass from m5
+			d_nop_in = 1;
+			d_wait = 1;
+			try_bypass = m5_res;
+			$display("  %h: Bypass m5: [%0d] = %0d", f_pc[11:0], adr, m5_res);
 		end else
-			// No bypass, so hoppfully reg value is "correct" for this instr
-			try_bypass = rgs_out[adr];
+			// No bypas from pipeline
+			// Try from rob
+			//from = 5'bx;
+			try_bypass = 32'bx;
+			for (i = 0; i < ROB_NUM_ENTRIES; i += 1) begin
+				if (rob_valid[i] == 1 && rob_reg[i] == adr) begin
+					
+					// might overwrite older value from prev loop
+					try_bypass = rob_val[i];
+					$display("rob bypass from %d", i);
+				end
+			end
+			if (try_bypass === 32'bx) begin
+				// No bypass form anywhere, so hoppfully reg value is "correct" for this instr
+				try_bypass = rgs_out[adr];
+			end else 
+				$display("bypass result %d", try_bypass);
 	end
 endfunction
 

@@ -1,4 +1,4 @@
-wire a_enable = 1; // TODO make wire
+wire a_enable = 1;
 assign a_enable = ~(t_wait || c_wait); 
 
 
@@ -112,45 +112,52 @@ reg a_wait = 0;
 
 // 0: ADD, 1: SUB, 2: MUL, 3: beq => ret 1, 4: jump
 always @(posedge clk or posedge reset) begin
+
 	if (reset) begin
         a_nop_in = 1;
     end else begin
-        a_nop_in = 0;
-		#0.3
-        // $display("D_NOP %d, A_NOP %d", d_nop, a_nop_in); 
-		if (d_func == 0) begin
-			a_res_in = d_r_a + d_r_b;
-            a_jump_in = 0;
-		end else if (d_func == 1) begin
-			a_res_in = d_r_a - d_r_b;
-            a_jump_in = 0;
-		end else if (d_func == 2) begin
-            a_res_in = d_r_a * d_r_b;
-            a_jump_in = 0;
-        end else if (d_func == 3) begin
-            if (d_r_a == 0) begin
+        #0.1
+
+        if (d_func == 2) begin
+            // ALU doesn't handle mult's
+            a_nop_in = 1;
+        end else begin
+            a_nop_in = 0;
+            #0.3
+            // $display("D_NOP %d, A_NOP %d", d_nop, a_nop_in); 
+            if (d_func == 0) begin
+                a_res_in = d_r_a + d_r_b;
+                a_jump_in = 0;
+            end else if (d_func == 1) begin
+                a_res_in = d_r_a - d_r_b;
+                a_jump_in = 0;
+            /*end else if (d_func == 2) begin
+                a_res_in = d_r_a * d_r_b;
+                a_jump_in = 0;*/
+            end else if (d_func == 3) begin
+                if (d_r_a == 0) begin
+                    // d_r_b is offset
+                    a_res_in = d_r_b;
+                    a_jump_in = 1;
+                end else begin
+                    a_res_in = 0;
+                    a_jump_in = 0;
+                end
+                //$display("Beq val %0d", a_jump_in);
+            end else if (d_func == 4) begin
                 // d_r_b is offset
-                a_res_in = d_r_b;
+                a_res_in <= d_r_d_a + $signed(d_r_b);
                 a_jump_in = 1;
+            end else if (d_func == 5) begin
+                a_res_in <= d_r_a + $signed(d_r_b);
+            end else if (d_func == 6) begin
+                // a_res_in = d_r_a + $signed(d_r_b);
+                // a_r_d_a <= d_r_a; // Move real destination
             end else begin
                 a_res_in = 0;
                 a_jump_in = 0;
             end
-            //$display("Beq val %0d", a_jump_in);
-		end else if (d_func == 4) begin
-            // d_r_b is offset
-            a_res_in <= d_r_d_a + $signed(d_r_b);
-            a_jump_in = 1;
-        end else if (d_func == 5) begin
-            a_res_in <= d_r_a + $signed(d_r_b);
-        end else if (d_func == 6) begin
-            // a_res_in = d_r_a + $signed(d_r_b);
-            // a_r_d_a <= d_r_a; // Move real destination
-		end else begin
-            a_res_in = 0;
-            a_jump_in = 0;
         end
-        
 	end
 end
 		
