@@ -93,34 +93,6 @@ always @(posedge clk) begin // exception
     end
 end
 
-always @(posedge clk) begin // jump logic
-    #0.2
-    // $display("CCACHE SWAP %h", a_swap_rm4);
-    pc_jump <= a_jump;
-    if (a_jump && a_nop == 0) begin
-        pc_in <= a_res;
-        // nop everything older and reset nop in programcounter
-        a_nop_in <= 1;
-        d_nop_in <= 1;
-        f_nop_in <= 1;
-        // f_wait <= 1;
-        #0.001 
-        $display("CACHE Jumping now to! %h", a_res_in);
-        if (a_swap_rm4) begin
-            $display("");
-            $display("");
-            $display("");
-            $display("");
-            $display("");
-            $display("");
-            // pc_in <= rm1;
-            irm1 <= -1;
-            irm0 <= -1;
-            rm4 <= 0;     
-        end
-    end
-end
-
 
 always @(posedge reset) begin
     for (i = 0; i < 3; i = i + 1) begin
@@ -152,6 +124,18 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
             end else begin
                 dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
             end
+            write_to_rob(
+                    a_tail,
+                    1,
+                    c_exception_in,
+                    a_r_d_a_val,
+                    a_r_d_a,
+                    a_pc,
+                    a_res,
+                    a_w,
+                    a_is_load,
+                    a_is_store,
+                    a_jump);
         end else if (a_is_load) begin
             $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
             if (a_stld_size == 8) begin
@@ -210,6 +194,18 @@ always @(posedge clk) begin
                 end else begin
                     dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
                 end
+                write_to_rob(
+                    a_tail,
+                    1,
+                    c_exception_in,
+                    a_r_d_a_val,
+                    a_r_d_a,
+                    a_pc,
+                    a_res,
+                    a_w,
+                    a_is_load,
+                    a_is_store,
+                    a_jump);
             end
                 
             c_wait <= 0;

@@ -37,6 +37,10 @@ reg [127:0] __mem_data [50000:0];
 initial begin
 	// Load instructions into memory here or use an external file.
 	$readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
+
+	#0.1
+	$display(__mem_data[2048]);
+	print_memory();
 end
 
 
@@ -163,8 +167,9 @@ end
 
 task print_memory();
 	begin
+		#0.1
 		$display("Memory:");
-		for(i = 0; i < 128; i += 1) begin
+		for(i = 2048; i < 128 + 2048; i += 1) begin
 			// ignore empty memory
 			if (~(__mem_data[i] === 128'bx)) begin
 				//$display("    %h: %h|%h|%h|%h", i[6:0], __mem_data[i][127:96], __mem_data[i][95:64], __mem_data[i][63:32], __mem_data[i][31:0]);

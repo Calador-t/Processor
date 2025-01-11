@@ -1,5 +1,5 @@
 wire m3_enable = 1;
-assign m3_enable = ~(t_wait || c_wait); 
+assign m3_enable = ~(c_wait); 
 
 
 wire [31:0] m3_pc;

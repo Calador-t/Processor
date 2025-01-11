@@ -28,7 +28,6 @@ always @(posedge icache_read or posedge icache_write or posedge reset) begin
             f_instr_in <= icache_data[pc[5:4]][(pc[3:2]* 32) +: 32];
             new_inst_found();
             // $display("iCache Hit: addr %h Byte = %0d, Index = %0d, Tag = %0h", iaddr, iaddr[3:2], iaddr[5:4], iaddr[31:6]);
-            f_nop_in <= 0;
         end else begin // cache miss, get from mem and update
  			#0.2
 			// $display("icache Miss: Reading from memory and updating icache addr %h", iaddr);
@@ -49,14 +48,13 @@ always @(posedge icache_read or posedge icache_write or posedge reset) begin
         #0.01
         f_instr_in <= icache_data[iaddr[5:4]][(iaddr[3:2]* 32) +: 32];
         new_inst_found();
-        // $display("Cache Fetch done: addr %h Byte = %0d, Index = %0d, Tag = %0h", iaddr, iaddr[3:2], iaddr[5:4], iaddr[31:6]);
+        $display("Cache Fetch done: addr %h Byte = %0d, Index = %0d, Tag = %0h, %b", iaddr, iaddr[3:2], iaddr[5:4], iaddr[31:6], icache_data[iaddr[5:4]][(iaddr[3:2]* 32) +: 32]);
     
         #0.01
 
 
         imem_read = 0;
         f_wait = 0;
-        f_nop_in = 0;
         
         imem_finished = 0;
         icache_write = 0;

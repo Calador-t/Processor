@@ -1,5 +1,5 @@
 wire a_enable = 1;
-assign a_enable = ~(t_wait || c_wait); 
+assign a_enable = ~(c_wait); 
 
 
 wire [31:0] a_pc;
@@ -136,10 +136,10 @@ always @(posedge clk or posedge reset) begin
             // ALU doesn't handle mult's
             a_nop_in = 1;
     end else begin
-        #0.1
         a_nop_in <= 0;
         a_swap_rm4_in <= 0;
         a_jump_in <= 0;
+        #0.1
         // $display("ALU NOP %h", d_nop);
         if (d_exception != 0) begin
             f_nop_in <= 1;
@@ -156,7 +156,8 @@ always @(posedge clk or posedge reset) begin
                 if (d_r_a == d_r_d_a_val) begin
                     // d_r_b is offset
                     a_res_in <= d_r_d_a + $signed(d_r_b);
-                    a_jump_in = 1;
+                    #0.01
+                    handle_jump();
                 end else if (d_func == 5) begin
                     a_res_in <= d_r_a + $signed(d_r_b);
                 end else if (d_func == 6) begin
@@ -170,7 +171,8 @@ always @(posedge clk or posedge reset) begin
                 // d_r_b is offset
                 $display("ALU jump");
                 a_res_in <= d_r_d_a + $signed(d_r_b);
-                a_jump_in = 1;
+                #0.01
+                handle_jump();
             end else if (d_func == 5) begin
                 a_res_in <= d_r_a + $signed(d_r_b);
             end else if (d_func == 6) begin
@@ -204,9 +206,13 @@ always @(posedge clk or posedge reset) begin
                     $display("UNPRIVILEGED TLBWRITE");
                 end
             end else if (d_func == 33) begin
-                a_swap_rm4_in <= 1;
-                a_jump_in <= 1;
-                a_res_in <= rm0;
+                a_res_in = rm0;
+                #0.01
+                handle_jump();
+                
+                irm1 <= -1;
+                irm0 <= -1;
+                rm4 <= 0;     
                 $display("IRET, SWAPPING rm4 and JUMPING TO rm0");
 
             end else begin
@@ -214,7 +220,37 @@ always @(posedge clk or posedge reset) begin
                 a_jump_in = 0;
             end
 	    end
+        if (~(d_is_store || d_is_load) && (a_nop_in == 0 && d_nop == 0)) begin
+            #0.5
+            $display("RoB alu set, wai %d, func %d", a_nop_in, d_func);
+            write_to_rob(
+                d_tail,
+                1,
+                a_exception_in,
+                a_res_in,
+                d_r_d_a,
+                d_pc,
+                f_tail_ctr,
+                d_w,
+                d_is_load,
+                d_is_store,
+                a_jump_in);
+        end
     end
 end
 		
+
+task handle_jump;
+    begin
+        if (d_nop == 0) begin
+            $display("jump test");
+            pc_in = a_res_in;
+            a_jump_in = 1;
+            pc_jump = 1;
+            // nop everything older and reset nop in programcounter
+            d_nop_in = 1;
+            f_nop_in = 1;
+        end
+    end
+endtask
 

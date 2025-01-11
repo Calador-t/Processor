@@ -1,8 +1,8 @@
 assign reset_pc = reset;
 // if 
-assign f_enable = ~(d_wait || a_wait || t_wait || c_wait);
+assign f_enable = ~(d_wait || a_wait || c_wait);
 
-assign enable_inc = ~(f_wait || d_wait || a_wait || t_wait || c_wait);
+assign enable_inc = ~(f_wait || d_wait || a_wait || c_wait);
 
 
 reg [31:0] memory [0:1023];
@@ -83,10 +83,6 @@ ff #(.BITS(1)) ff_f_wait_for_cache (
 
 reg f_wait = 0;
 
-initial begin 
-	print_memory();
-end
-
 always @(posedge clk or posedge reset) begin
 	f_nop_in <= 0;
 	f_exception_in <= 0;
@@ -121,7 +117,6 @@ task new_inst_found();
 		if (~reset) begin
 			#0.1
 			f_wait_for_cache_in = 0;
-			f_instr_in = cache_result;
 			if (f_rob_full == 1) begin
 				//f_tail_in = 4'bx;
 				f_nop_in = 1;

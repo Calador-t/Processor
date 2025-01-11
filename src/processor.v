@@ -29,7 +29,8 @@ wire [31:0] data = 0;
 `include "mul/m4.v"
 `include "mul/m5.v"
 `include "tl/tl_m.v"
-`include "tl/tl.v"
+`include "tl/rob.v"
+//`include "tl/tl.v"
 `include "memory/dcache.v"
 `include "write_back/write_back.v"
 `include "memory/mem.v"
@@ -47,20 +48,22 @@ $dumpvars(0,processor_tb);
 #1 reset = 1;
 #1 reset = 0;
 
-#2000 $finish;
+#200 $finish;
 	
 end
 
 
 always @(posedge clk or posedge reset) begin
 	if (~reset) begin
-		#0.001 print_pipeline();
+		$display("Cycle start");
+		#0.0001 print_pipeline();
 	end
 end
 
 
 task print_pipeline;
 begin
+	$display("___________________________________________________");
 	$display("");
 	// Display Rob
 	if (1) begin
@@ -69,13 +72,13 @@ begin
 	end
 	//$display("ICACHE %d | %d | %d | %d", icache_data[0], icache_data[1], icache_data[2], icache_data[3]);
 	//$display("DCACHE %d | %d | %d | %d", dcache_data[0], dcache_data[1], dcache_data[2], dcache_data[3]);
-	if (f_wait_for_cache) begin
+	/*if (f_wait_for_cache) begin
 		$display("  %h  F: wait cache, tail: %0d nop: %d", 
 			f_pc,
 			f_tail, 
 			f_nop,
 		);
-	end else begin
+	end else*/ begin
 		$display("  %h  F: %h|%h|%h|%h|%h, tail: %0d nop: %d", 
 			f_pc,
 			f_instr[31:25], // Opcode
@@ -201,7 +204,6 @@ begin
 			c_pc,
 			c_nop,
 		);
-	$display("___________________________________________________");
 	$display("");
 end
 endtask

@@ -39,8 +39,8 @@ end
 always @(posedge dtlb_read) begin
     #0.2
     dtlb_read <= 0;
-    if (!f_nop_in) begin
-        if (!rm4 ) begin
+    if (!a_nop) begin
+        if (!rm4) begin
             hit <= 0;
             #0.01
             for (i = 0; i < 20; i = i + 1) begin 
@@ -69,6 +69,21 @@ always @(posedge dtlb_read) begin
             dcache_read <= 1;
             #0.1
             $display("OFF addr at dtlb %h", d_addr);
+            #0.01
+            if (a_is_store || ~(c_exception_in == 0 )) begin
+                write_to_rob(
+                    a_tail,
+                    1,
+                    c_exception_in,
+                    a_r_d_a_val,
+                    a_r_d_a,
+                    a_pc,
+                    a_res,
+                    a_w,
+                    a_is_load,
+                    a_is_store,
+                    a_jump);
+            end
         end
     end
 end

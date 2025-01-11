@@ -1,6 +1,6 @@
 
 wire d_enable = 1; // TODO make wire
-assign d_enable = ~( a_wait || t_wait || c_wait); 
+assign d_enable = ~( a_wait || c_wait); 
 
 wire [31:0] d_pc;
 ff #(.BITS(32)) ff_d_pc (

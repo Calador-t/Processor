@@ -13,6 +13,7 @@ always @(posedge clk or posedge reset) begin
             0,
             0,
             0,
+            0,
             0);
     end
 end
