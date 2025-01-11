@@ -1,5 +1,6 @@
 module ff#(
-    parameter BITS = 32  // Default data width is 8 bits
+    parameter BITS = 32,  // Default data width is 8 bits
+			  START_VAL = 0
 ) (
 	input [BITS-1:0] in, 
 	input clk, 
@@ -10,7 +11,11 @@ module ff#(
 	
 	always @(posedge clk or posedge reset) begin
 		if (reset)
-			out <= {BITS{1'b0}};
+			if (START_VAL === 1'bx) begin
+				out <= {BITS{1'bx}};
+			end else begin
+				out <= {BITS{1'b0}};
+			end
 		else if (enable)
 			out <= in;
 	end

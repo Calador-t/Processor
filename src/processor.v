@@ -42,7 +42,6 @@ initial begin
 
 #1 reset = 1;
 #1 reset = 0;
-$display("R2 . ", rgs_out[2]);
 
 #150 $finish;
 
