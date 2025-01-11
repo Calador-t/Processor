@@ -60,10 +60,10 @@ always @(posedge reset or posedge mem_reset) begin
 	// FOR TESTS STORE A[128] AT 9k hex => 9215
 	// Store 128 32-bit words with value 1
     for (j = 2112; j < 2112+128; j = j + 1) begin // A[128] = [1,1,1,...]
-      __mem_data[j][31:0]   = 32'h1;
-      __mem_data[j][63:32]  = 32'h1;
-      __mem_data[j][95:64]  = 32'h1;
-      __mem_data[j][127:96] = 32'h1;
+      __mem_data[j][31:0]   = 32'd1;
+      __mem_data[j][63:32]  = 32'd1;
+      __mem_data[j][95:64]  = 32'd1;
+      __mem_data[j][127:96] = 32'd1;
     end
 
 	for (j = 9343; j < 9471; j = j + 1) begin // B[128] = [1,1,1,...]
@@ -140,11 +140,11 @@ always @(posedge clk) begin
 		if (dwait_cycles >= 2) begin
 			if (dmem_write) begin
 				__mem_data[__dmem_w_a_buffer] <= __dmem_in_d_buffer;
-				#0.01 $display("    Mem: Wirte [%d] = %d", __dmem_w_a_buffer, __mem_data[__dmem_w_a_buffer]);
+				#0.01 $display("    Mem: Wirte [%d] = %b", __dmem_w_a_buffer, __mem_data[__dmem_w_a_buffer]);
 			end
 			if (dmem_read) begin
 				out_dmem <= __mem_data[__dmem_r_a_buffer];
-				#0.01 $display("    Mem: Read [%d] = %d", __dmem_r_a_buffer, __mem_data[__dmem_r_a_buffer]);
+				#0.01 $display("    Mem: Read [%d] = %b", __dmem_r_a_buffer, __mem_data[__dmem_r_a_buffer]);
 				dmem_finished = 1;
 			end
 			#0.01 

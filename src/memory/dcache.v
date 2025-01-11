@@ -114,6 +114,8 @@ always @(posedge clk) begin // jump logic
             $display("");
             $display("");
             // pc_in <= rm1;
+            irm1 <= -1;
+            irm0 <= -1;
             rm4 <= 0;     
         end
     end
@@ -137,6 +139,7 @@ reg dhit = 0;
 always @(posedge dcache_read) begin // we get here from dTLB, so we can skip most checks
     #0.1
     dhit <= (dcache_valid[d_addr[5:4]] && dcache_tags[d_addr[5:4]] == d_addr[31:6]);
+    dcache_read <= 0;
     #0.01
     if (dhit) begin
         $display("DCACHE HIT size %d", a_stld_size);
@@ -156,8 +159,9 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
             end else if (a_stld_size == 16) begin
                 c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
             end else begin
-                $display("Here 32 bit load");
                 c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
+                #0.01
+                $display("Here 32 bit load val %d", c_res_in);
             end
         end
     end else begin
@@ -192,9 +196,9 @@ always @(posedge clk) begin
                 end else if (a_stld_size == 16) begin
                     c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
                 end else begin
-                    $display("Here 32 bit load");
                     c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
-                    
+                    #0.01
+                    $display("Here 32 bit load val %d", c_res_in);
                 end
             end
             if (a_is_store) begin

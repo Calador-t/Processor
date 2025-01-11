@@ -46,6 +46,7 @@ always @(posedge dtlb_read) begin
             for (i = 0; i < 20; i = i + 1) begin 
                 $display("daddr %h, paddr %h, want %h", dtlb_vpns[i], dtlb_ppns[i], dtlb_va);
                 if (dtlb_vpns[i] == dtlb_va[31:12]) begin
+                    $display("Hit!");
                     hit <= 1;
                     d_addr <= dtlb_ppns[i] + dtlb_va[11:0];
                 end
@@ -55,7 +56,7 @@ always @(posedge dtlb_read) begin
             if (hit) begin
                 dcache_read <= 1;
                 #0.1
-                $display("dtlb HIT, addr at dtlb before %h, after %h", dtlb_va, d_addr);
+                $display("dtlb HIT, addr at dtlb before %h, after %h", dtlb_va[31:12], d_addr);
             end else if (a_exception == 0) begin
                 drm0 <= a_pc; // Save faulting PC
                 drm1 <= dtlb_va; // Save faulting memory @

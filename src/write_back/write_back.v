@@ -22,7 +22,7 @@ always @(posedge clk or posedge reset) begin
             rm0 <= irm0;
             rm1 <= irm1;
             f_nop_in <= 1;
-            // d_nop_in <= 1;
+            d_nop_in <= 1;
             // a_nop_in <= 1;
             // c_nop_in <= 1;
             $display("ITLB EXCEPTION, JUMPING TO 2K!");
@@ -37,8 +37,8 @@ always @(posedge clk or posedge reset) begin
             rm4 <= 1; // Switch on supervisor mode
             f_nop_in <= 1;
             d_nop_in <= 1;
-            // a_nop_in <= 1;
-            // c_nop_in <= 1;
+            a_nop_in <= 1;
+            c_nop_in <= 1;
             rm0 <= drm0;
             rm1 <= drm1;
             $display("dTLB EXCEPTION, JUMPING TO 2K!");

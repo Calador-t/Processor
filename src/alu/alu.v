@@ -142,7 +142,7 @@ always @(posedge clk or posedge reset) begin
             a_res_in = d_r_a * d_r_b;
             a_jump_in = 0;
         end else if (d_func == 3) begin
-            if (d_r_a - d_r_d_a_val == 0) begin
+            if (d_r_a == d_r_d_a_val) begin
                 // d_r_b is offset
                 a_res_in = d_r_b;
                 a_jump_in = 1;

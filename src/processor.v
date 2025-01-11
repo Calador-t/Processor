@@ -20,7 +20,6 @@ wire [31:0] data = 0;
 
 
 `include "rgs.v"
-`include "ff.v"
 `include "fetch/fetch.v"
 `include "decode/decode.v"
 `include "alu/alu.v"
@@ -35,15 +34,13 @@ wire [31:0] data = 0;
 
 
 initial begin
-
+$dumpfile("test.vcd");
+$dumpvars(0,processor_tb);
 
 #1 reset = 1;
 #1 reset = 0;
 
-#1000 $finish;
-
-
-
+#2000 $finish;
 	
 end
 

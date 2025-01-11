@@ -146,10 +146,7 @@ always @(posedge clk or posedge reset) begin
 		if (d_func_in == 17) begin
 			d_r_a_in <= f_instr[19:0]; // LI WE WANT LITERAL
 		end else begin
-			$display("Trying bypass d_r_a");
 			d_r_a_in <= try_bypass(f_instr[19:15]); //SRC1
-			#0.1
-			$display("HE In decode d_r_a_in %d %d", d_r_a_in, d_enable);	
 			if (f_instr[31:29] == 1) begin
 				d_r_b_in <= f_instr[14:0];
 			end
@@ -157,10 +154,13 @@ always @(posedge clk or posedge reset) begin
 
 		d_w_in <= needs_write(f_instr[31:25]);
 		if (d_func_in == 3) begin
+			$display("Here!");
 			d_r_b_in <= f_instr[14:0];
-		end if (f_instr[31:29] == 0) begin
+		end else if (f_instr[31:29] == 0) begin
+			$display("Here!2");
 			d_r_b_in <= try_bypass(f_instr[14:10]);
 		end else begin		
+			$display("Here!3");
 			d_r_b_in <= {f_instr[24:20], f_instr[14:0]};
 		end
 
@@ -177,14 +177,14 @@ always @(posedge clk or posedge reset) begin
 			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); //[stld_size_in:0]; //Destination
 		end else if (d_func_in == 3) begin
 			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); // Store second operand for comp
+			#0.01
+			$display("Decode: Beq, a: %d, b: %d", d_r_d_a_val_in, d_r_a_in);
 		end
 
 		if (f_exception != 0) begin
 			$display("Exception in decode!");
 			f_nop_in <= 1;
 		end
-		#0.01
-		$display("In decode d_r_a_in %d", d_r_a_in);
 	end
 end
 
@@ -242,8 +242,7 @@ function [32:0] try_bypass;
 			if (a_is_load == 0) begin
 				try_bypass = a_res;
 				$display(" Bypass %h: Decode Bypass from ALU got %d", f_pc[11:0], try_bypass);
-			end
-			else begin
+			end else begin
 				// value not ready yet, wait
 				d_nop_in = 1;
 				d_wait = 1;
@@ -261,10 +260,11 @@ function [32:0] try_bypass;
 				$display("  Stall %h: dependency unresolvable from cache", f_pc[11:0]);
 				try_bypass = 32'bx;
 			end
-		end else
+		end else begin
 			// No bypass, so hoppfully reg value is "correct" for this instr
 			$display(" Bypass %h: Decode Value from Regs adr %d is %d", f_pc[11:0], adr, rgs_out[adr]);
 			try_bypass = rgs_out[adr];
+		end
 	end
 endfunction
 

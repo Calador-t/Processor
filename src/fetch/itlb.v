@@ -1,5 +1,5 @@
-reg [31:0]  irm0; // PC of the instruction
-reg [31:0]  irm1; // VA to be translated
+reg signed [32:0] irm0; // PC of the instruction
+reg signed [32:0] irm1; // VA to be translated
 reg [31:0] itlb_va;
 reg itlb_read;
 reg itlb_hit;
@@ -19,8 +19,8 @@ reg [31:0] page_table_root_addr;
 
 always @(posedge reset) begin
     if (reset) begin
-        irm0 <= 0;
-        irm1 <= 0;
+        irm0 <= -1;
+        irm1 <= -1;
         page_table_root_addr <= 'h5000;
         itlb_miss <= 0;
         itlb_wait <= 1;
@@ -60,7 +60,7 @@ always @(posedge itlb_read) begin
                 // $display("ITLB HIT, addr at itlb before %h, after %h", itlb_va, iaddr);
             end else begin
                 $display("ITLB MISS");
-                if (f_exception_in == 0) begin
+                if (f_exception_in == 0 && irm1 == -1 && irm0 == -1) begin
                     irm0 <= pc; // Save faulting PC
                     irm1 <= pc; // Save faulting memory @
                     f_exception_in <= 1;

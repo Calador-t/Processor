@@ -10,12 +10,16 @@ always @(posedge clk or posedge reset) begin
 	// $display("PC %d %d %d %d", pc, enable_pc, enable_inc, was_reseted);
 	// $display("WAIT F %d D %d A %d C %d", f_wait, d_wait, a_wait, c_wait);
 	// $display("ENABLE INC %d ENABLE PC %d", enable_inc, enable_pc);
+	if (pc == 400) begin
+			$stop(2);
+		end
 	if (reset_pc) begin
 		pc <= 'h1000; // PROCESSOR BOOT ADDRESS
 		was_reseted <= 1;
 	end
 
 	else if (enable_pc) begin
+		
 		// $display("PC ENABLED");
 		if (was_reseted) begin
 			// $display("PC RESET");
