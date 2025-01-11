@@ -19,44 +19,40 @@ always @(posedge reset) begin
     cache_finished = 1;
 end
 
-// Handle read
-always @(posedge icache_read or posedge reset) begin
-    #0.01
-    if (~reset) begin
-        cache_finished = 0;
-        // $display("Reading from cache, pc %d", iaddr);
-        // Already in cache?
+always @(posedge icache_read or posedge icache_write or posedge reset) begin
+    if (reset) begin
+        icache_read <= 0;
+    end else if (icache_read) begin
         if (icache_valid[iaddr[5:4]] && icache_tags[iaddr[5:4]] == iaddr[31:6]) begin
-            //$display("Cache Hit: addr %d Byte = %0d, Index = %0d, Tag = %0h", iaddr, iaddr, iaddr[5:4], iaddr[31:4]);
-            cache_result <= icache_data[iaddr[5:4]][(iaddr[3:2]* 32) +: 32];
-            cache_finished = 1;
-            f_nop_in = 0; 
-        // cache miss, get from mem and update
-        end else begin 
- 			#0.01
-			// $display("icache Miss: Reading from memory and updating icache addr %d", iaddr);
+            
+            f_instr_in <= icache_data[pc[5:4]][(pc[3:2]* 32) +: 32];
+            new_inst_found();
+            // $display("iCache Hit: addr %h Byte = %0d, Index = %0d, Tag = %0h", iaddr, iaddr[3:2], iaddr[5:4], iaddr[31:6]);
+            f_nop_in <= 0;
+        end else begin // cache miss, get from mem and update
+ 			#0.2
+			// $display("icache Miss: Reading from memory and updating icache addr %h", iaddr);
+            // $display("CACHE ADDR %d", iaddr[31:4]);
+            // $display("CACHE ADDR FULL %d", iaddr);
 			imem_address <= iaddr[31:4];
         	imem_read <= 1;
             //$display("imem set read");
 			f_wait = 1;
 			f_nop_in = 1;
         end
+        #0.01
         icache_read <= 0;
-    end
-end
-
-// Handle result from memory
-always @(posedge imem_finished or posedge reset) begin   
-    if (~reset) begin // This isn't really write into icache but bringing in new line, do we need write for icache?
-        // $display("Bringing in new cache line");
-        // $display("Writing to cache, pc %d, :0=%d, 5:4=%d, 31:4=%d", iaddr, iaddr[5:4], iaddr[:0], iaddr[31:4]);
+    end else if (icache_write) begin
         icache_tags[iaddr[5:4]] <= iaddr[31:6]; 
         icache_data[iaddr[5:4]] <= out_imem; // Store 128-bit line
         icache_valid[iaddr[5:4]] <= 1;
         #0.01
-        cache_result <= icache_data[iaddr[5:4]][(iaddr[3:2]* 32) +: 32];
-        // $display("WRITING LINE %d", out_mem);
-        // $display("INSTRUCTION %d | %d", f_instr_input, icache_data[iaddr[5:4]][(iaddr[:0]* 32) +: 32]);
+        f_instr_in <= icache_data[iaddr[5:4]][(iaddr[3:2]* 32) +: 32];
+        new_inst_found();
+        // $display("Cache Fetch done: addr %h Byte = %0d, Index = %0d, Tag = %0h", iaddr, iaddr[3:2], iaddr[5:4], iaddr[31:6]);
+    
+        #0.01
+
 
         imem_read = 0;
         f_wait = 0;

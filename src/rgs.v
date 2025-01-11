@@ -3,6 +3,7 @@ reg [31:0] rgs_out [31:0];
 reg [31:0] rgs_in; // Only writen to one register per cycle => on wire enough.
 reg [4:0] rgs_in_a;
 reg rgs_enable = 0;
+reg         rm4 = 1; // Privilege of the machine. Boot in supervisor mode.
 integer i;
 
 	always @(posedge clk or posedge reset) begin
