@@ -1,0 +1,26 @@
+li 0 r1         #0 	Initialize i = 0 for the first loop
+li 5 r2         #4 	Load the value 5 into r2 (to store in a[i])
+li 9215 r3      #8 	Load the base address of array a into r3
+li 128 r4       #c 	Set limit for the loop (128)
+li 0 r5         #10 	Offset for array a
+li 4 r6         #14 	Increment offset by 4 bytes for each iteration
+add r3 r5 r7    #18	Compute address of a[i] (base + offset) into r7
+stw r2 0 r7     #1c 	Store 5 into a[i]
+add r5 r6 r5    #20 	Increment offset (r5 += 4)
+add r1 r8 r1    #24 	Increment i (r1 += 1)
+beq r1 48 r4     #28 	Exit loop if i == 128, jump to instr #30
+jump r0 24      
+li 0 r1         #30 	Reset i = 0
+li 0 r5         #34 	Reset offset for array a
+li 0 r9         #38 	Offset for array b
+li 9215 r3      #3c 	Base address of array a
+li 10239 r10    #40 	Base address of array b
+add r3 r5 r7    #44 	Compute address of a[i] (base + offset) into r7
+add r10 r9 r11  #48 	Compute address of b[i] (base + offset) into r11
+ldw r7 0 r12    #4c 	Load a[i] into r12
+stw r12 0 r11   #50 	Store r12 into b[i]
+add r5 r6 r5    #54 	Increment offset for array a (r5 += 4)
+add r9 r6 r9    #58 	Increment offset for array b (r9 += 4)
+add r1 r8 r1    #5c 	Increment i (r1 += 1)
+beq r1 400 r4 	#60 	Exit loop if i == 128
+jump r0 68	

@@ -72,6 +72,9 @@ if not os.path.exists('asmbl.bin'):
 target_file = open('asmbl.bin', 'w');
 
 
+lines = []
+l = 0
+n=1
 for line in file:
     # Print each line
     print(line[:-1])
@@ -144,5 +147,3 @@ for line in file:
     print(binary)
     target_file.write(binary + "\n")
     print("")
-
-

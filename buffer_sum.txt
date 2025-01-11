@@ -12,5 +12,7 @@ add r9 r1 r1     # Add a[i] to sum
 add r2 r8 r2     # Increment i
 add r5 r7 r5     # Increment offset
 beq r2 5 r4      # Exit loop if i == 128
-jump r0 2 	 
+jump r0 32         	 
 # Loop start at virtual address 1, so hardcode it for now
+# loop start add r5... is x20=32
+

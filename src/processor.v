@@ -40,7 +40,7 @@ $dumpvars(0,processor_tb);
 #1 reset = 1;
 #1 reset = 0;
 
-#2000 $finish;
+// #2000 $finish;
 	
 end
 

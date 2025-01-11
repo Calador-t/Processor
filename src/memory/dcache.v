@@ -165,11 +165,12 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
             end
         end
     end else begin
-        if (dcache_valid[d_addr[3:2]]) begin 
+        $display("DCACHE MISS size %d", a_stld_size);
+        if (dcache_valid[d_addr[5:4]]) begin 
             // miss and need to flush cache 
             // this will overlap the read always so no need to sync or anything, maybe implement more coherently when doing reordering and stuff
-            dmem_in_data <= dcache_data[d_addr[3:2]];
-            dmem_w_address <= dcache_tags[d_addr[3:2]];
+            dmem_in_data <= dcache_data[d_addr[5:4]];
+            dmem_w_address <= dcache_tags[d_addr[5:4]];
             dmem_write <= 1;
         end
         dmem_r_address <= d_addr[31:4];
@@ -185,9 +186,9 @@ always @(posedge clk) begin
     #0.1
     if (c_wait) begin
         if (dmem_finished) begin
-            dcache_tags[d_addr[3:2]] <= d_addr[31:6]; 
-            dcache_data[d_addr[3:2]] <= out_dmem;
-            dcache_valid[d_addr[3:2]] <= 1;
+            dcache_tags[d_addr[5:4]] <= d_addr[31:6]; 
+            dcache_data[d_addr[5:4]] <= out_dmem;
+            dcache_valid[d_addr[5:4]] <= 1;
             #0.01
             if (a_is_load) begin
                 $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);

@@ -23,7 +23,8 @@ reg dmem_read;
 reg __iwrite_or_read = 0;
 reg __dwrite_or_read = 0;
 integer iwait_cycles;
-integer dwait_cycles;
+integer dwrite_cycles;
+integer dread_cycles;
 
 reg [19:0] va_to_pa = 'h8000;
 reg [31:0] rm0;
@@ -60,10 +61,10 @@ always @(posedge reset or posedge mem_reset) begin
 	// FOR TESTS STORE A[128] AT 9k hex => 9215
 	// Store 128 32-bit words with value 1
     for (j = 2112; j < 2112+128; j = j + 1) begin // A[128] = [1,1,1,...]
-      __mem_data[j][31:0]   = 32'd1;
-      __mem_data[j][63:32]  = 32'd1;
-      __mem_data[j][95:64]  = 32'd1;
-      __mem_data[j][127:96] = 32'd1;
+      __mem_data[j][31:0]   = 32'd2;
+      __mem_data[j][63:32]  = 32'd2;
+      __mem_data[j][95:64]  = 32'd2;
+      __mem_data[j][127:96] = 32'd2;
     end
 
 	for (j = 9343; j < 9471; j = j + 1) begin // B[128] = [1,1,1,...]
@@ -101,12 +102,12 @@ always @(posedge dmem_write or posedge dmem_read or posedge imem_read) begin
 		__dmem_in_d_buffer <= dmem_in_data;
 		__dmem_w_a_buffer <= dmem_w_address;
 		__dwrite_or_read <= 1'b1;
-		dwait_cycles = 0;
+		dwrite_cycles = 0;
 	end else if (dmem_read) begin	
         $display("READING Dmem ADDRESS %d", dmem_r_address);
 		__dmem_r_a_buffer <= dmem_r_address;
 		__dwrite_or_read <= 1'b0;
-		dwait_cycles = 0;
+		dread_cycles = 0;
 	end 
 end 
 
@@ -133,26 +134,31 @@ always @(posedge clk) begin
 			imem_finished = 1;
         end 
 	end
-	if (dwait_cycles >= 0) begin
-		dwait_cycles += 1;
+	if (dread_cycles >= 0) begin
+		dread_cycles += 1;
 		#0.01
         // $display("WAIT CYCLES %d", iwait_cycles);
-		if (dwait_cycles >= 2) begin
-			if (dmem_write) begin
-				__mem_data[__dmem_w_a_buffer] <= __dmem_in_d_buffer;
-				#0.01 $display("    Mem: Wirte [%d] = %b", __dmem_w_a_buffer, __mem_data[__dmem_w_a_buffer]);
-			end
-			if (dmem_read) begin
-				out_dmem <= __mem_data[__dmem_r_a_buffer];
-				#0.01 $display("    Mem: Read [%d] = %b", __dmem_r_a_buffer, __mem_data[__dmem_r_a_buffer]);
-				dmem_finished = 1;
-			end
-			#0.01 
-			dwait_cycles = -1;
-			dmem_write <= 0;
+		if (dread_cycles >= 2) begin
+			out_dmem <= __mem_data[__dmem_r_a_buffer];
+			#0.01 $display("    Mem: Read [%d] = %b", __dmem_r_a_buffer, __mem_data[__dmem_r_a_buffer]);
+			dmem_finished = 1;
+			dread_cycles = -1;
+			dmem_read <= 0;
 
         end 
 	end
+	if (dwrite_cycles >= 0) begin
+		dwrite_cycles += 1;
+		#0.01
+        // $display("WAIT CYCLES %d", iwait_cycles);
+		if (dwrite_cycles >= 2) begin
+			__mem_data[__dmem_w_a_buffer] <= __dmem_in_d_buffer;
+			#0.01 $display("    Mem: Wirte [%d] = %b", __dmem_w_a_buffer, __mem_data[__dmem_w_a_buffer]);
+			dwrite_cycles = -1;
+			dmem_write <= 0;
+        end 
+	end
+
 end     
 
 
