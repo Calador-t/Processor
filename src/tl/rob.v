@@ -19,10 +19,53 @@ reg rob_jump [ROB_NUM_ENTRIES:0];
 
 
 always @(posedge clk or posedge reset) begin
-    #0.1
+    #0.11
     if (reset) begin
         rob_head = 0;
     end else if (rob_valid[rob_head]) begin 
+        if (rob_exc[rob_head] == 1) begin  // iTLB MISS
+            pc_in <= 'h2000; // Jump to h2000
+            pc_jump <= 1;
+            rm4 <= 1; // Switch on supervisor mode
+            rm0 <= irm0;
+            rm1 <= irm1;
+            f_nop_in <= 1;
+            d_nop_in <= 1;
+            // a_nop_in <= 1;
+            // c_nop_in <= 1;
+            $display("ITLB EXCEPTION, JUMPING TO 2K!");
+            $display("%d", rob_exc[rob_head]);
+            $display("");
+            $display("");
+            $display("");
+            $display("");
+        end else if (rob_exc[rob_head] == 2) begin // dTLB MISS
+            pc_in <= 'h2010; // Jump to h2000
+            pc_jump <= 1;
+            rm4 <= 1; // Switch on supervisor mode
+            f_nop_in <= 1;
+            d_nop_in <= 1;
+            a_nop_in <= 1;
+            c_nop_in <= 1;
+            rm0 <= drm0;
+            rm1 <= drm1;
+            $display("dTLB EXCEPTION, JUMPING TO 2K!");
+            $display("%d", rob_exc[rob_head]);
+            $display("");
+            $display("");
+            $display("");
+            $display("");
+        end else if (rob_write[rob_head] == 1) begin
+            if (rob_reg[rob_head] < 32) begin
+                rgs_out[rob_reg[rob_head]] = rob_val[rob_head];
+            end
+            #0.01
+            for(i = 0; i < 32; i += 1) begin
+				$display("Reg index %d = %d", i, rgs_out[i]);
+				// #0.00001 $display("rg ini: %d", rgs_out[i]);
+			end
+            // #0.001 $display("    Wb: r[%0d] = %0d", c_r_d_a, rgs_out[c_res]);
+        end
         rob_valid[rob_head] = 0;
         if (rob_jump[rob_head] == 1) begin
             rob_head = rob_add_miss[rob_head];    

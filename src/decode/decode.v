@@ -1,6 +1,6 @@
 
 wire d_enable = 1; // TODO make wire
-assign d_enable = ~( a_wait || c_wait); 
+assign d_enable = ~( a_wait || c_wait);
 
 wire [31:0] d_pc;
 ff #(.BITS(32)) ff_d_pc (
@@ -130,18 +130,25 @@ ff #(.BITS(1)) ff_d_nop (
 	.out(d_nop)
 );
 
-
 reg d_wait = 0;
 
 
 
 always @(posedge clk or posedge reset) begin
-	#0.41
+	 // Wait for alu to 
+	#0.1
+	d_nop_in = 0;
+	#1.0
+	$display("Test Dnopin");
 	if (reset) begin
+		#0.01
 		d_nop_in = 1;
-	end else if (f_nop == 0) begin
+	end else if (d_nop_in == 1) begin
+		$display("D wiat set 0");
+		d_wait = 0;
+	end else if (d_nop_in == 0 && f_nop == 0) begin
 		#0.05 // reset wait & nop to nood need overrite when it is 0
-		d_nop_in = 0;
+		
 		d_wait = 0;
 		#0.05
 		d_func_in <= calc_func(f_instr[31:25]);
@@ -226,7 +233,7 @@ function [6:0] calc_func;
 			calc_func = 16; //MOV
 		else if (op == 'h17) 
 			calc_func = 17; //LI
-		else if (op == 'h32) 
+		else if (op == 'h32)
 			calc_func = 32; // TLBWRITE
 		else if (op == 'h33)
 			calc_func = 33; // IRET
@@ -235,12 +242,11 @@ function [6:0] calc_func;
 		else
 			calc_func = 0; //ADD
 	end
-endfunction 
+endfunction
 
 // Tries to get vlaue if not possible stalls (set wait to true)
 function [32:0] try_bypass;
 	input [4:0] adr;
-
 	if (d_func_in != 32 && d_func_in != 33) begin
 
 		if (d_nop == 0 && adr == d_r_d_a) begin

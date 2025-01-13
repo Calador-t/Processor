@@ -6,6 +6,8 @@ reg [31:0] pc = 'h1000;
 reg [31:0] pc_in = 'h1000;
 reg pc_jump = 0;
 reg was_reseted = 1;
+
+
 always @(posedge clk or posedge reset) begin
 	// $display("PC %d %d %d %d", pc, enable_pc, enable_inc, was_reseted);
 	// $display("WAIT F %d D %d A %d C %d", f_wait, d_wait, a_wait, c_wait);
@@ -27,11 +29,14 @@ always @(posedge clk or posedge reset) begin
 		end
 		else begin
 			if (pc_jump) begin
-				$display("JUMPING TO %h", pc_in);
+				
 				pc <= pc_in;
 				// f_nop_in <= 0;
 				f_wait <= 0;
 				pc_jump <= 0;
+				
+				#0.2
+				$display("  JUMPING TO %h", pc_in);
 			end else if(enable_inc) begin
 				// $display("NO JUMP");
 				pc <= pc + 4;

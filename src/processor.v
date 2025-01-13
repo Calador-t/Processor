@@ -17,7 +17,7 @@ reg reset = 0;
 //reg enable = 1;
 reg [31:0] 	in_data = 0;
 wire [31:0] data = 0;
-
+integer cycle_num = 0;
 
 `include "rgs.v"
 `include "fetch/fetch.v"
@@ -32,7 +32,7 @@ wire [31:0] data = 0;
 `include "tl/rob.v"
 //`include "tl/tl.v"
 `include "memory/dcache.v"
-`include "write_back/write_back.v"
+//`include "write_back/write_back.v"
 `include "memory/mem.v"
 `include "memory/dtlb.v"
 `include "fetch/itlb.v"
@@ -47,16 +47,22 @@ $dumpvars(0,processor_tb);
 
 #1 reset = 1;
 #1 reset = 0;
-
-#200 $finish;
+cycle_num = 0;
+#150 $finish;
 	
 end
 
 
 always @(posedge clk or posedge reset) begin
 	if (~reset) begin
-		$display("Cycle start");
-		#0.0001 print_pipeline();
+		cycle_num += 1;
+		$display("Cycle: %0d", cycle_num);
+		$display(" PC " , pc);
+		$display("  En inc", enable_inc);
+		#0.001 print_pipeline();
+		$display(" PC " , pc);
+		#9.0 $display("  En Fetch fe %d, dw %d, aw %d, cw %d, ", f_enable, d_wait, a_wait, c_wait);
+		$display("f_n_i %d, f_e %d, e_inc %d", f_nop_in, f_enable, enable_inc);
 	end
 end
 
@@ -79,19 +85,20 @@ begin
 			f_nop,
 		);
 	end else*/ begin
-		$display("  %h  F: %h|%h|%h|%h|%h, tail: %0d nop: %d", 
+		$display("  %h  F: %h|%h|%h|%h|%h, tail: %0d exc: %d, nop: %d", 
 			f_pc,
 			f_instr[31:25], // Opcode
 			f_instr[24:20], // Dst
 			f_instr[19:15], // Src1
 			f_instr[14:10], // Src2
 			f_instr[9:0],	// Rest
-			f_tail, 
+			f_tail,
+			f_exception,
 			f_nop,
 		);
 	end
 	//if (d_func === 6'bx || d_func != 2) begin
-		$display("  %h  D: f: %d, d_a: %0d, w: %d, r_a: %0d, r_b: %0d, load: %d, store: %d, tail: %0d, nop: %d", 
+		$display("  %h  D: f: %d, d_a: %0d, w: %d, r_a: %0d, r_b: %0d, load: %d, store: %d, tail: %0d, exc: %d, nop: %d", 
 			d_pc,
 			d_func, 
 			d_r_d_a, 
@@ -101,19 +108,21 @@ begin
 			d_is_load,
 			d_is_store,
 			d_tail,
+			d_exception,
 			d_nop,
 		);
 	//end else begin
 		// Mul instruction is executed
 		if (a_jump) begin
-			$display("  %h  ALU: Jump to %0d, tail: %0d, nop: %d", 
+			$display("  %h  ALU: Jump to %0d, tail: %0d, exc: %d, nop: %d", 
 				a_pc,
 				a_res,
 				a_tail,
+				a_exception,
 				a_nop,
 			);
 		end else begin
-			$display("  %h  ALU: res: %0d, d_a: %0d, w: %d, is_load: %d, is_store: %d, jump: %d, tail: %0d, nop: %d", 
+			$display("  %h  ALU: res: %0d, d_a: %0d, w: %d, is_load: %d, is_store: %d, jump: %d, tail: %0d, exc: %d, nop: %d", 
 				a_pc,
 				a_res, 
 				a_r_d_a, 
@@ -122,6 +131,7 @@ begin
 				a_is_store,
 				a_jump,
 				a_tail,
+				a_exception,
 				a_nop,
 			);
 		end
@@ -143,6 +153,7 @@ begin
 			m2_r_a, 
 			m2_r_b, 
 			m2_tail,
+			//m2_exception,
 			m2_nop,
 		);
 	end
@@ -153,6 +164,7 @@ begin
 			m3_r_a, 
 			m3_r_b, 
 			m3_tail,
+			//m3_exception,
 			m3_nop,
 		);
 	end
@@ -163,6 +175,7 @@ begin
 			m4_r_a, 
 			m4_r_b, 
 			m4_tail,
+			//m4_exception,
 			m4_nop,
 		);
 	end
@@ -172,6 +185,7 @@ begin
 			m5_r_d_a, 
 			m5_res,
 			m5_tail,
+			//m5_exception,
 			m5_nop,
 		);
 	end
@@ -192,7 +206,7 @@ begin
 			rob_pc[rob_head],
 			rob_head,
 		);
-	if (c_w) begin
+	/*if (c_w) begin
 		$display("  %h  WB: rgs[%0d] = %0d, nop: %d", 
 			c_pc,
 			c_r_d_a, 
@@ -203,7 +217,7 @@ begin
 		$display("  %h  WB: no write, nop: %d",
 			c_pc,
 			c_nop,
-		);
+		);*/
 	$display("");
 end
 endtask

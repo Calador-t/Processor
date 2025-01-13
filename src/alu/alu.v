@@ -115,7 +115,7 @@ ff #(.BITS(1)) ff_a_swap_rm4 (
     .out(a_swap_rm4)
 );
 
-reg [4:0] a_exception_in = 0; // 0 itlb miss, 1 dtlb miss, ...
+
 wire [4:0] a_exception;
 ff #(.BITS(5)) ff_a_exception (
 	.in(d_exception),
@@ -136,12 +136,14 @@ always @(posedge clk or posedge reset) begin
             // ALU doesn't handle mult's
             a_nop_in = 1;
     end else begin
+        #0.1
         a_nop_in <= 0;
         a_swap_rm4_in <= 0;
         a_jump_in <= 0;
         #0.1
         // $display("ALU NOP %h", d_nop);
         if (d_exception != 0) begin
+
             f_nop_in <= 1;
             d_nop_in <= 1;
         end if (!d_nop) begin
@@ -226,7 +228,7 @@ always @(posedge clk or posedge reset) begin
             write_to_rob(
                 d_tail,
                 1,
-                a_exception_in,
+                d_exception,
                 a_res_in,
                 d_r_d_a,
                 d_pc,
@@ -245,11 +247,16 @@ task handle_jump;
         if (d_nop == 0) begin
             $display("jump test");
             pc_in = a_res_in;
+            
             a_jump_in = 1;
             pc_jump = 1;
             // nop everything older and reset nop in programcounter
             d_nop_in = 1;
+            //d_nop_in_force = 1;
+            //f_nop_in_force = 1;
             f_nop_in = 1;
+            #0.01
+            $display("set fnop jump = %d, %d", f_nop_in);
         end
     end
 endtask

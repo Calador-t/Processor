@@ -1,8 +1,8 @@
 always @(posedge clk or posedge reset) begin
-    #0.2
+    #0.1
     // $display("WB EXCEPTION %d", c_exception);
 
-	if (reset == 0 && c_nop == 0) begin
+	if (reset == 0 && ) begin
         #0.2
         // $display("WB %h", c_swap_rm4);
 

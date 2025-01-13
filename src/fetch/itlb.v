@@ -59,7 +59,7 @@ always @(posedge itlb_read) begin
                 // #0.1
                 // $display("ITLB HIT, addr at itlb before %h, after %h", itlb_va, iaddr);
             end else begin
-                $display("ITLB MISS");
+                $display("ITLB MISS, pc %h", pc);
                 if (f_exception_in == 0 && irm1 == -1 && irm0 == -1) begin
                     irm0 <= pc; // Save faulting PC
                     irm1 <= pc; // Save faulting memory @

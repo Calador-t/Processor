@@ -16,8 +16,14 @@ module ff#(
 			end else begin
 				out <= {BITS{1'b0}};
 			end
-		else if (enable)
+		else if (enable == 1 || enable == 'bx) begin
+			if (enable == 'bx)
+				$display("Enable was x");
+			//$display("set_out %d", in);
 			out <= in;
+		end else begin
+			//$display("disavle %d", in);
+		end
 	end
 
 endmodule

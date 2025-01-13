@@ -1,13 +1,11 @@
 assign reset_pc = reset;
-// if 
-assign f_enable = ~(d_wait || a_wait || c_wait);
 
 assign enable_inc = ~(f_wait || d_wait || a_wait || c_wait);
 
 
 reg [31:0] memory [0:1023];
 
-wire f_enable = 1;
+wire f_enable = (~d_wait && ~a_wait && ~c_wait);
 
 reg [4:0] f_exception_in = 0; // 1 itlb miss, 2 dtlb miss, ...
 wire [4:0] f_exception;
