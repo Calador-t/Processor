@@ -1,6 +1,6 @@
 li 0 r1         # Initialize sum = 0
 li 0 r2        	# Initialize i = 0
-li 9215 r3 	# Load the base address of array a into r3
+li 9000 r3 	# Load the base address of array a into r3
 li 128 r4  	# Set limit for loop (128)
 li 0 r5        	# Offset from base addr
 li 0 r6		# Offset + base addr  
@@ -11,8 +11,5 @@ ldw r6 0 r9      # Load a[i] into r9
 add r9 r1 r1     # Add a[i] to sum
 add r2 r8 r2     # Increment i
 add r5 r7 r5     # Increment offset
-beq r2 5 r4      # Exit loop if i == 128
+beq r2 400 r4      # Exit loop if i == 128
 jump r0 32         	 
-# Loop start at virtual address 1, so hardcode it for now
-# loop start add r5... is x20=32
-

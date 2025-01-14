@@ -13,7 +13,7 @@ jump r0 24
 li 0 r0         #30 	Reset i = 0
 li 0 r5         #34 	Reset offset for array a
 li 9215 r3      #38 	Base address of array a
-li 10000 r10    #3c 	Base address of array b
+li 160000 r10   #3c 	Base address of array b
 add r3 r5 r7    #40 	Compute address of a[i] (base + offset) into r7
 add r10 r5 r11  #44 	Compute address of b[i] (base + offset) into r11
 ldw r7 0 r12    #48 	Load a[i] into r12

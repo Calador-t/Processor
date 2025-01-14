@@ -54,7 +54,7 @@ ff #(.BITS(32)) ff_c_res (
 reg c_nop_in = 0;
 wire c_nop;
 ff #(.BITS(1)) ff_c_nop (
-    .in(a_nop || c_nop_in),
+    .in((a_nop && m5_nop) || c_nop_in),
     .clk(clk),
     .enable(c_enable),
     .reset(reset),
@@ -95,17 +95,16 @@ end
 
 always @(posedge clk) begin // jump logic
     #0.4
-    pc_jump <= a_jump;
+    pc_jump <= 0;
+    #0.001
     // $display("dcache: a_jump %d", a_jump);
     if (a_jump && a_nop == 0) begin
         pc_in <= a_res;
+        pc_jump <= a_jump;
         // nop everything older and reset nop in programcounter
-        a_nop_in <= 1;
-        d_nop_in <= 1;
-        f_nop_in <= 1;
         // f_wait <= 1;
         #0.001 
-        $display("CACHE Jumping now to! %h", a_res_in);
+        $display("CACHE Jumping now to! %h", a_res);
         $display("fenable %d, denable %d, aenable %d", f_wait, d_wait, a_wait);
         if (a_swap_rm4) begin
             $display("");
@@ -119,6 +118,12 @@ always @(posedge clk) begin // jump logic
             irm0 <= -1;
             rm4 <= 0;     
         end
+        #1
+        a_nop_in <= 1;
+        d_nop_in <= 1;
+        f_nop_in <= 1;
+        f_wait <= 0;
+        d_wait <= 0;
     end
 end
 
@@ -142,6 +147,7 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
     dhit <= (dcache_valid[d_addr[5:4]] && dcache_tags[d_addr[5:4]] == d_addr[31:6]);
     dcache_read <= 0;
     #0.01
+    $display("POSEDGE READ DCACHE");
     if (dhit) begin
         $display("DCACHE HIT size %d", a_stld_size);
         if (a_is_store) begin
@@ -226,6 +232,7 @@ always @(posedge clk) begin
     // end
     c_exception_in <= a_exception;
     #0.1
+    $display("POSEDGE CLOCK DCACHE");
     if (c_wait) begin
         if (dmem_finished) begin
             #0.01
@@ -247,7 +254,7 @@ always @(posedge clk) begin
                 end
             end
             if (a_is_store) begin
-                $display("Storing %d in dcache byte %d index %d", a_r_d_a_val, d_addr[3:2], d_addr[5:4]);
+                $display("Storing %d in dcache byte %d index %d, daddr %h", a_r_d_a_val, d_addr[3:2], d_addr[5:4], d_addr);
                 if (a_stld_size == 8) begin
                     dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8] <= a_r_d_a_val[7:0];
                 end else if (a_stld_size == 16) begin
@@ -255,6 +262,8 @@ always @(posedge clk) begin
                 end else begin
                     dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32] <= a_r_d_a_val;
                 end
+                #0.1
+                $display("Cache line after store %b", dcache_data[d_addr[5:4]]);
             end
                 
             c_wait <= 0;
@@ -268,6 +277,12 @@ always @(posedge clk) begin
         dtlb_va <= a_res;
         dtlb_read <= 1;
     end else begin
-        c_res_in <= a_res;
+        $display("A_nop %d, m5_nop %d", a_nop, m5_nop);
+        if (a_nop == 1 && m5_nop == 0) begin
+            c_res_in <= m5_res;
+            $display("!!!!!! Made mult: %d", m5_res);
+        end else begin
+            c_res_in <= a_res;
+        end;
     end
 end

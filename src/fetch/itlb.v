@@ -39,17 +39,21 @@ end
 always @(posedge itlb_read) begin
     #0.3
     itlb_read <= 0;
+    // $display("Itlb here");
     if (!f_nop_in) begin
+        // $display("Itlb here2");
         if (!rm4 ) begin
+            // $display("Itlb here3");
             itlb_hit <= 0;
             #0.01
             for (i = 0; i < 20; i = i + 1) begin 
                 // $display("iaddr %h, paddr %h, want %h", itlb_vpns[i], itlb_ppns[i], itlb_va);
                 // $display("%h", itlb_vpns[i] - itlb_va[31:12]==0);
                 if (itlb_vpns[i] - itlb_va[31:12] == 0) begin
-                    // $display("Here!");
+                    $display("Here!");
                     itlb_hit <= 1;
-                    iaddr <= itlb_ppns[i] + itlb_va[11:0];
+                    iaddr[31:12] <= itlb_ppns[i] ;
+                    iaddr[11:0]   = itlb_va[11:0];
                 end
             end
             #0.01
@@ -59,7 +63,7 @@ always @(posedge itlb_read) begin
                 // #0.1
                 // $display("ITLB HIT, addr at itlb before %h, after %h", itlb_va, iaddr);
             end else begin
-                $display("ITLB MISS");
+                // $display("ITLB MISS");
                 if (f_exception_in == 0 && irm1 == -1 && irm0 == -1) begin
                     irm0 <= pc; // Save faulting PC
                     irm1 <= pc; // Save faulting memory @

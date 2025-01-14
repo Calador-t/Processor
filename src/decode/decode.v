@@ -121,6 +121,14 @@ ff #(.BITS(1)) ff_d_nop (
 	.out(d_nop)
 );
 
+wire [31:0] d_predict;
+ff #(.BITS(32)) ff_d_predict (
+	.in(f_predict),
+	.clk(clk),
+	.enable(d_enable),
+	.reset(reset),
+	.out(d_predict)
+);
 reg d_wait = 0;
 
 
@@ -260,6 +268,29 @@ function [32:0] try_bypass;
 				$display("  Stall %h: dependency unresolvable from cache", f_pc[11:0]);
 				try_bypass = 32'bx;
 			end
+		end else if (m1_nop == 0 && m1_r_d_a == adr) begin
+			d_nop_in = 1;
+			d_wait = 1;
+			$display("  Stall %h: dependency from m1", f_pc[11:0]);
+			try_bypass = 32'bx;
+		end else if (m2_nop == 0 && m2_r_d_a == adr) begin
+			d_nop_in = 1;
+			d_wait = 1;
+			$display("  Stall %h: dependency from m2", f_pc[11:0]);
+			try_bypass = 32'bx;
+		end else if (m3_nop == 0 && m3_r_d_a == adr) begin
+			d_nop_in = 1;
+			d_wait = 1;
+			$display("  Stall %h: dependency from m3", f_pc[11:0]);
+			try_bypass = 32'bx;
+		end else if (m4_nop == 0 && m4_r_d_a == adr) begin
+			d_nop_in = 1;
+			d_wait = 1;
+			$display("  Stall %h: dependency from m4", f_pc[11:0]);
+			try_bypass = 32'bx;
+		end else if (m5_nop == 0 && m5_r_d_a == adr) begin
+			$display("  Baypass %h: from m5, val %d", f_pc[11:0], m5_res);
+			try_bypass = m5_res;
 		end else begin
 			// No bypass, so hoppfully reg value is "correct" for this instr
 			$display(" Bypass %h: Decode Value from Regs adr %d is %d", f_pc[11:0], adr, rgs_out[adr]);

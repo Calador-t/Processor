@@ -1,0 +1,17 @@
+li 0 r1         #0 Initialize sum = 0
+li 0 r2        	#4 Initialize i = 0
+li 9000 r3 		#8 Load the base address of array a into r3
+li 128 r4  		#c Set limit for loop (128)
+li 0 r5        	#10 Offset from base addr
+li 0 r6			#14 Offset + base addr  
+li 4 r7			#18 Value 4 to increment offset by each iter instead of using mul
+li 1 r8         #1c Load 1 into r8 for use
+li 2 r10
+add r5 r3 r6     #24 Compute address of a[i] (base + offset)
+ldw r6 0 r9      #28 Load a[i] into r9
+mul r9 r10 r9	 #2c Mul by 2
+add r9 r1 r1     #30 Add a[i] to sum
+add r2 r8 r2     #34 Increment i
+add r5 r7 r5     #38 Increment offset
+beq r2 400 r4      #3c Exit loop if i == 128
+jump r0 36

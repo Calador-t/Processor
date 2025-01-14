@@ -21,15 +21,23 @@ wire [31:0] data = 0;
 
 `include "rgs.v"
 `include "fetch/fetch.v"
+`include "fetch/branch_predictor.v"
+`include "fetch/itlb.v"
+`include "fetch/instruction_cache.v"
+`include "fetch/programcounter.v"
 `include "decode/decode.v"
 `include "alu/alu.v"
+`include "alu/m1.v"
+`include "alu/m2.v"
+`include "alu/m3.v"
+`include "alu/m4.v"
+`include "alu/m5.v"
 `include "memory/dcache.v"
 `include "write_back/write_back.v"
 `include "memory/mem.v"
 `include "memory/dtlb.v"
-`include "fetch/itlb.v"
-`include "fetch/instruction_cache.v"
-`include "fetch/programcounter.v"
+
+
 
 
 
@@ -40,7 +48,7 @@ $dumpvars(0,processor_tb);
 #1 reset = 1;
 #1 reset = 0;
 
-// #15500 $finish;
+// #18000 $finish;
 	
 end
 

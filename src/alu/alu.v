@@ -114,7 +114,7 @@ ff #(.BITS(5)) ff_a_exception (
 	.reset(reset),
 	.out(a_exception)
 );
-
+reg [31:0] page_translation = 0;
 reg a_wait = 0;
 
 
@@ -129,7 +129,7 @@ always @(posedge clk or posedge reset) begin
 		f_nop_in <= 1;
         d_nop_in <= 1;
 	end
-	if (reset == 0 && !d_nop) begin
+    if (reset == 0 && !d_nop && (d_func != 2 || d_exception != 0)) begin
         $display("Here %d", d_func);
 		#0.1
 		if (d_func == 0) begin
@@ -143,20 +143,55 @@ always @(posedge clk or posedge reset) begin
             a_jump_in = 0;
         end else if (d_func == 3) begin
             if (d_r_a == d_r_d_a_val) begin
-                // d_r_b is offset
-                a_res_in = d_r_b;
-                a_jump_in = 1;
+                // a_res_in = d_r_b;
+                // a_jump_in = 1;
+                if (~(d_predict === 32'bx) && d_predict == d_r_b) begin
+                    // Correct prediction
+                    // => don't jump
+                    $display("Correct prediction: %0h", d_predict);
+                end else begin
+                    // No prediction or wrong => jump to correct address
+                    // d_r_b is offset
+                    a_res_in = d_r_b;
+                    a_jump_in = 1;
+                    $display("targ: %0h", a_res_in);
+                end
+                set_prediction(d_pc, d_r_b, 1);
             end else begin
-                a_res_in = 0;
-                a_jump_in = 0;
+                // a_res_in = 0;
+                // a_jump_in = 0;
+                if (~(d_predict === 32'bx)) begin
+                    // Jumped, but shouldn't have
+                    $display("Rolback prediction: %0h", d_predict);
+                    a_res_in = d_pc +4;
+                    a_jump_in = 1;
+                    $display("targ: %0h", a_res_in);
+                    set_prediction(d_pc, d_r_b, 1);
+                end else begin
+                    $display("targ: %0h", a_res_in);
+                    a_res_in = 0;
+                    a_jump_in = 0;
+                end
+                set_prediction(d_pc, 0, 0);
             end
             #0.01
-            $display("Beq val %d %d",d_r_a, d_r_d_a_val );
+            print_bp();
+            $display("%h: Beq val %d ?= %d -> ", d_pc, d_r_a, d_r_d_a_val, a_res_in);
 		end else if (d_func == 4) begin
-            // d_r_b is offset
             $display("ALU jump");
-            a_res_in <= d_r_d_a + $signed(d_r_b);
-            a_jump_in = 1;
+            // a_res_in <= d_r_d_a + $signed(d_r_b);
+            // a_jump_in = 1;
+            if (~(d_predict === 32'bx) && d_predict == d_r_d_a + $signed(d_r_b)) begin
+                // Correct prediction
+                // => don't jump
+            end else begin
+                // d_r_b is offset
+                $display("ALU jump");
+                a_res_in <= d_r_d_a + $signed(d_r_b);
+                a_jump_in = 1;
+            end
+            set_prediction(d_pc, d_r_d_a + $signed(d_r_b), 1);
+            print_bp();
         end else if (d_func == 5) begin
             a_res_in <= d_r_a + $signed(d_r_b);
         end else if (d_func == 6) begin
@@ -166,11 +201,14 @@ always @(posedge clk or posedge reset) begin
             a_res_in <= d_r_a;
             $display("Loading! %d", d_r_a);
         end else if (d_func == 32) begin //TLBWRITE
+            $display("TLBWRITE");
             if (rm4) begin
+                page_translation = rm1 + 'h8000;
+                #0.01
                 if (d_r_d_a == 0) begin
                     itlb_vpns[itlb_tail] <= rm1[31:12];
-                    itlb_ppns[itlb_tail] <= rm1[31:12] + 'h8000;
-                    itlb_valids[itlb_tail] = 1'b0;
+                    itlb_ppns[itlb_tail] <= page_translation[31:12];
+                    itlb_valids[itlb_tail] = 1'b1;
                     itlb_page_protections[itlb_tail] <= 'b11;
                     #0.01
                     $display("TLBWRITE index %h, iaddr %h, paddr %h", itlb_tail, itlb_vpns[itlb_tail], itlb_ppns[itlb_tail]);
@@ -178,11 +216,11 @@ always @(posedge clk or posedge reset) begin
                 end else begin
                     $display("rm1 %d rm0 %d", rm1, rm0);
                     dtlb_vpns[dtlb_tail] <= rm1[31:12];
-                    dtlb_ppns[dtlb_tail] <= rm1[31:12] + 'h8000;
-                    dtlb_valids[dtlb_tail] = 1'b0;
+                    dtlb_ppns[dtlb_tail] <= page_translation[31:12];
+                    dtlb_valids[dtlb_tail] = 1'b1;
                     dtlb_page_protections[dtlb_tail] <= 'b11;
                     #0.01
-                    $display("DTLBWRITE index %d, d_addr %d, paddr %d", dtlb_tail, dtlb_vpns[dtlb_tail], dtlb_ppns[dtlb_tail]);
+                    $display("DTLBWRITE index %h, d_addr %h, paddr %h", dtlb_tail, dtlb_vpns[dtlb_tail], dtlb_ppns[dtlb_tail]);
                     #0.1
                     dtlb_tail <= (dtlb_tail + 1) % 20;
                 end
@@ -201,4 +239,5 @@ always @(posedge clk or posedge reset) begin
 	end
 end
 		
+
 

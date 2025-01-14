@@ -1,13 +1,13 @@
 assign reset_pc = reset;
 // if 
-assign f_enable = ~(d_wait || a_wait || c_wait);
+// assign f_enable = ;
 
 assign enable_inc = ~(f_wait || d_wait || a_wait || c_wait);
 
 
 reg [31:0] memory [0:1023];
 
-wire f_enable = 1;
+wire f_enable = ~(d_wait || a_wait || c_wait);
 
 reg [4:0] f_exception_in = 0; // 1 itlb miss, 2 dtlb miss, ...
 wire [4:0] f_exception;
@@ -48,12 +48,37 @@ ff #(.BITS(1)) ff_f_nop (
 	.out(f_nop)
 );
 
+wire [31:0] f_predict;
+reg [31:0] f_predict_in;
+ff #(.BITS(32)) ff_f_predict (
+	.in(f_predict_in),
+	.clk(clk),
+	.enable(f_enable),
+	.reset(reset),
+	.out(f_predict)
+);
+
+
 reg f_wait = 0;
 
 always @(posedge clk or posedge reset) begin
 	f_nop_in <= 0;
 	f_exception_in <= 0;
 	#0.01
+	f_predict_in = predict_pc(pc);
+	$display("  %h: f ped in: ", pc, f_predict_in);
+	if (~(f_predict_in === 32'bx)) begin
+		// validcadress was found
+		$display("");
+		$display("");
+		$display("");
+		$display("");
+		$display("predict jump: pc %0h to %0h", pc, f_predict_in);
+		$display("");
+		pc_has_prediction = 1;
+		pc_predicted_in = f_predict_in;
+	end
+	print_bp();
     if (reset) begin
 		// $display("reset");
         f_wait <= 0;
@@ -62,16 +87,18 @@ always @(posedge clk or posedge reset) begin
 		f_nop_in = 1;
 
     end else if (!f_wait) begin // Look into cache
-		// $display("Forwarding to tlb");
-		#0.01
+		$display("Forwarding to tlb");
 		itlb_va <= pc;
 		itlb_read <= 1;
+		#0.5
+		imem_read <= 0;
+		imem_finished <= 0;
 	end else if (imem_read) begin  // getting from mem currently
 		if (imem_finished) begin // finished mem look
-			// $display("Reading from memory finished");
+			$display("Reading from memory finished");
             icache_write <= 1;
 		end else begin // keep looking
-			// $display("Reading from memory");
+			$display("Reading from memory");
 			f_nop_in = 1;
 			f_wait = 1;
 		end
@@ -80,5 +107,6 @@ always @(posedge clk or posedge reset) begin
 		f_nop_in = 1;
 		f_wait = 1;
 	end
-	
+	#1
+	$display("fenable %d, f_wait %d, d_wait %d, a_wait %d, c_wait %d", f_enable, f_wait, d_wait, a_wait, c_wait);
 end

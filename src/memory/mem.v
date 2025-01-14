@@ -30,13 +30,14 @@ reg [19:0] va_to_pa = 'h8000;
 reg [31:0] rm0;
 reg [31:0] rm1;
 
-reg [127:0] __mem_data [50000:0]; 
+reg [127:0] __mem_data [100000:0]; 
 
 
 
 initial begin
-	// $readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
-	$readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/buffer_mul.bin", __mem_data, 2048, 3000);
+	$readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
 	// Load instructions into memory here or use an external file.
 	// $readmemb("programs/memcpy.bin", __mem_data, 2048, 3000);
 end
@@ -62,18 +63,25 @@ always @(posedge reset or posedge mem_reset) begin
 
 	// FOR TESTS STORE A[128] AT 9k hex => 9215
 	// Store 128 32-bit words with value 1
-    for (j = 2112; j < 2112+128; j = j + 1) begin // A[128] = [1,1,1,...]
-      __mem_data[j][31:0]   = 32'd3;
-      __mem_data[j][63:32]  = 32'd3;
-      __mem_data[j][95:64]  = 32'd3;
-      __mem_data[j][127:96] = 32'd3;
+    for (j = 2610; j < 2610+ (32*128); j = j + 1) begin // A[128][128] = [1,1,1,...]
+      __mem_data[j][31:0]   = 32'd2;
+      __mem_data[j][63:32]  = 32'd2;
+      __mem_data[j][95:64]  = 32'd2;
+      __mem_data[j][127:96] = 32'd2;
     end
 
-	for (j = 2161; j < 2161; j = j + 1) begin // B[128] = [1,1,1,...]
-      __mem_data[j][31:0]   = 32'h1;
-      __mem_data[j][63:32]  = 32'h1;
-      __mem_data[j][95:64]  = 32'h1;
-      __mem_data[j][127:96] = 32'h1;
+	for (j = 7048; j < 7048+ (32*128); j = j + 1) begin // B[128][128] = [1,1,1,...]
+      __mem_data[j][31:0]   = 32'h2;
+      __mem_data[j][63:32]  = 32'h2;
+      __mem_data[j][95:64]  = 32'h2;
+      __mem_data[j][127:96] = 32'h2;
+    end
+
+	for (j = 12046; j < 12048+ (32*128); j = j + 1) begin // B[128][128] = [1,1,1,...]
+      __mem_data[j][31:0]   = 32'h2;
+      __mem_data[j][63:32]  = 32'h2;
+      __mem_data[j][95:64]  = 32'h2;
+      __mem_data[j][127:96] = 32'h2;
     end
 end
 
@@ -165,10 +173,11 @@ end
 
 task printmem();
 	integer j;
-	for (j = 2161; j < 2161+32; j = j + 1) begin // A[128] = [1,1,1,...]
-      $display("%d",__mem_data[j][31:0]);
-	  $display("%d",__mem_data[j][63:32]);
-	  $display("%d",__mem_data[j][95:64]);
-	  $display("%d",__mem_data[j][127:96]);
+	for (j = 12046; j < 12048+(32); j = j + 1) begin // A[128] = [1,1,1,...]
+      $display("%d %d %d %d",__mem_data[j][31:0], __mem_data[j][63:32], __mem_data[j][95:64],__mem_data[j][127:96]);
     end
+	$display("CACHE");
+	for (j = 0; j < 4; j = j + 1) begin
+		$display("%d %d %d %d", dcache_data[j][31:0], dcache_data[j][63:32], dcache_data[j][95:64],dcache_data[j][127:96]);
+	end 
 endtask
