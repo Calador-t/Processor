@@ -130,7 +130,6 @@ always @(posedge clk or posedge reset) begin
         d_nop_in <= 1;
 	end
     if (reset == 0 && !d_nop && (d_func != 2 || d_exception != 0)) begin
-        $display("Here %d", d_func);
 		#0.1
 		if (d_func == 0) begin
 			a_res_in = d_r_a + d_r_b;
@@ -175,7 +174,6 @@ always @(posedge clk or posedge reset) begin
                 set_prediction(d_pc, 0, 0);
             end
             #0.01
-            print_bp();
             $display("%h: Beq val %d ?= %d -> ", d_pc, d_r_a, d_r_d_a_val, a_res_in);
 		end else if (d_func == 4) begin
             $display("ALU jump");
@@ -191,7 +189,6 @@ always @(posedge clk or posedge reset) begin
                 a_jump_in = 1;
             end
             set_prediction(d_pc, d_r_d_a + $signed(d_r_b), 1);
-            print_bp();
         end else if (d_func == 5) begin
             a_res_in <= d_r_a + $signed(d_r_b);
         end else if (d_func == 6) begin
@@ -199,7 +196,6 @@ always @(posedge clk or posedge reset) begin
             // a_r_d_a <= d_r_a; // Move real destination
         end else if ((d_func > 9 && d_func < 16) || d_func == 17) begin
             a_res_in <= d_r_a;
-            $display("Loading! %d", d_r_a);
         end else if (d_func == 32) begin //TLBWRITE
             $display("TLBWRITE");
             if (rm4) begin

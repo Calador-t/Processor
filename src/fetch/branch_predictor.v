@@ -9,10 +9,9 @@ always @(posedge reset) begin
         for(i_bp = 0; i_bp < 8; i_bp += 1) begin
             bp_pc[i_bp] <= 32'bx;
         end
-        #0.001
-        print_bp();
     end
 end
+
 function [31:0] predict_pc;
     input [31:0] in_pc;
     //$display("!!! Branch Predict %b, %b", in_pc, in_pc[4:2]);
@@ -46,6 +45,7 @@ function set_prediction;
             $display("  [%0d] %h -> %h", i_bp,  bp_pc[in_pc[4:2]], bp_target[in_pc[4:2]]);
         end
 endfunction
+
 task print_bp;
     $display();
     $display();

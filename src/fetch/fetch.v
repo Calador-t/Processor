@@ -66,7 +66,6 @@ always @(posedge clk or posedge reset) begin
 	f_exception_in <= 0;
 	#0.01
 	f_predict_in = predict_pc(pc);
-	$display("  %h: f ped in: ", pc, f_predict_in);
 	if (~(f_predict_in === 32'bx)) begin
 		// validcadress was found
 		$display("");
@@ -78,7 +77,6 @@ always @(posedge clk or posedge reset) begin
 		pc_has_prediction = 1;
 		pc_predicted_in = f_predict_in;
 	end
-	print_bp();
     if (reset) begin
 		// $display("reset");
         f_wait <= 0;
@@ -107,6 +105,4 @@ always @(posedge clk or posedge reset) begin
 		f_nop_in = 1;
 		f_wait = 1;
 	end
-	#1
-	$display("fenable %d, f_wait %d, d_wait %d, a_wait %d, c_wait %d", f_enable, f_wait, d_wait, a_wait, c_wait);
 end

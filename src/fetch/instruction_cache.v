@@ -18,7 +18,6 @@ end
 
 
 always @(posedge icache_read or posedge icache_write or posedge reset) begin
-    $display("Here");
     if (reset) begin
         icache_read <= 0;
     end else if (icache_read) begin

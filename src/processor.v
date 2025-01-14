@@ -33,6 +33,7 @@ wire [31:0] data = 0;
 `include "alu/m4.v"
 `include "alu/m5.v"
 `include "memory/dcache.v"
+`include "memory/sb.v"
 `include "write_back/write_back.v"
 `include "memory/mem.v"
 `include "memory/dtlb.v"
@@ -48,7 +49,7 @@ $dumpvars(0,processor_tb);
 #1 reset = 1;
 #1 reset = 0;
 
-// #18000 $finish;
+// #700 $finish;
 	
 end
 

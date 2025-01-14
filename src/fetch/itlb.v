@@ -50,7 +50,6 @@ always @(posedge itlb_read) begin
                 // $display("iaddr %h, paddr %h, want %h", itlb_vpns[i], itlb_ppns[i], itlb_va);
                 // $display("%h", itlb_vpns[i] - itlb_va[31:12]==0);
                 if (itlb_vpns[i] - itlb_va[31:12] == 0) begin
-                    $display("Here!");
                     itlb_hit <= 1;
                     iaddr[31:12] <= itlb_ppns[i] ;
                     iaddr[11:0]   = itlb_va[11:0];
