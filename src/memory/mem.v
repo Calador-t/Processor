@@ -35,8 +35,8 @@ reg [127:0] __mem_data [50000:0];
 
 
 initial begin
-	$readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
-	// $readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
+	$readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
 	// Load instructions into memory here or use an external file.
 	// $readmemb("programs/memcpy.bin", __mem_data, 2048, 3000);
 end
