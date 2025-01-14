@@ -1,12 +1,12 @@
 // General flags
 reg imem_finished = 0;
 reg dmem_finished = 0;
-reg [32:0] imem_address;
-reg [32:0] dmem_r_address;
-reg [32:0] dmem_w_address;
-reg [32:0] __imem_a_buffer;
-reg [32:0] __dmem_r_a_buffer;
-reg [32:0] __dmem_w_a_buffer;
+reg [31:0] imem_address;
+reg [31:0] dmem_r_address;
+reg [31:0] dmem_w_address;
+reg [31:0] __imem_a_buffer;
+reg [31:0] __dmem_r_a_buffer;
+reg [31:0] __dmem_w_a_buffer;
 reg mem_reset;
 
 // in vars
@@ -35,8 +35,10 @@ reg [127:0] __mem_data [50000:0];
 
 
 initial begin
+	$readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
 	// Load instructions into memory here or use an external file.
-	$readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/memcpy.bin", __mem_data, 2048, 3000);
 end
 
 
@@ -61,13 +63,13 @@ always @(posedge reset or posedge mem_reset) begin
 	// FOR TESTS STORE A[128] AT 9k hex => 9215
 	// Store 128 32-bit words with value 1
     for (j = 2112; j < 2112+128; j = j + 1) begin // A[128] = [1,1,1,...]
-      __mem_data[j][31:0]   = 32'd2;
-      __mem_data[j][63:32]  = 32'd2;
-      __mem_data[j][95:64]  = 32'd2;
-      __mem_data[j][127:96] = 32'd2;
+      __mem_data[j][31:0]   = 32'd3;
+      __mem_data[j][63:32]  = 32'd3;
+      __mem_data[j][95:64]  = 32'd3;
+      __mem_data[j][127:96] = 32'd3;
     end
 
-	for (j = 9343; j < 9471; j = j + 1) begin // B[128] = [1,1,1,...]
+	for (j = 2161; j < 2161; j = j + 1) begin // B[128] = [1,1,1,...]
       __mem_data[j][31:0]   = 32'h1;
       __mem_data[j][63:32]  = 32'h1;
       __mem_data[j][95:64]  = 32'h1;
@@ -103,7 +105,8 @@ always @(posedge dmem_write or posedge dmem_read or posedge imem_read) begin
 		__dmem_w_a_buffer <= dmem_w_address;
 		__dwrite_or_read <= 1'b1;
 		dwrite_cycles = 0;
-	end else if (dmem_read) begin	
+	end 
+	if (dmem_read) begin	
         $display("READING Dmem ADDRESS %d", dmem_r_address);
 		__dmem_r_a_buffer <= dmem_r_address;
 		__dwrite_or_read <= 1'b0;
@@ -126,7 +129,7 @@ always @(posedge clk) begin
 				
 			out_imem <= __mem_data[__imem_a_buffer];
 				#0.01 
-				$display("    Mem: Read [%d] = %b", __imem_a_buffer, __mem_data[__imem_a_buffer]);
+				$display("    IMem: Read [%d] = %b", __imem_a_buffer, __mem_data[__imem_a_buffer]);
                 // imem_read = 0;
 			// end
 			#0.01 
@@ -144,7 +147,6 @@ always @(posedge clk) begin
 			dmem_finished = 1;
 			dread_cycles = -1;
 			dmem_read <= 0;
-
         end 
 	end
 	if (dwrite_cycles >= 0) begin
@@ -161,4 +163,12 @@ always @(posedge clk) begin
 
 end     
 
-
+task printmem();
+	integer j;
+	for (j = 2161; j < 2161+32; j = j + 1) begin // A[128] = [1,1,1,...]
+      $display("%d",__mem_data[j][31:0]);
+	  $display("%d",__mem_data[j][63:32]);
+	  $display("%d",__mem_data[j][95:64]);
+	  $display("%d",__mem_data[j][127:96]);
+    end
+endtask

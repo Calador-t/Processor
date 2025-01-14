@@ -1,0 +1,42 @@
+li 0 r0           #0  Initialize i = 0
+li 0 r1           #4  Initialize j = 0
+li 0 r2           #8  Initialize k = 0
+li 1 r19	  #c  Initalize a 1
+li 128 r3         #10  Set limit (128)
+li 9215 r5        #14 Base address of array a
+li 10000 r6       #18 Base address of array b
+li 12000 r7       #1c Base address of array c
+li 0 r30	  #20 Just a 0
+li 4 r8           #24 Offset increment (4 bytes for each array element)
+mul r3 r8 r31	  #28 Store 128*4 for row calc
+li 0 r23	  #2c   Initialize irow_offset
+li 0 r1       	  #30 L1: Reset j to 0 for each i
+li 0 r25	  #34     Reset j_col_offset to 0
+li 0 r4       	  #38 	  L2: Reset c[i][j] = 0
+li 0 r26	  #3c	      Reset k_col_offset to 0
+li 0 r21	  #40	      Reset krow offset to 0
+li 0 r2           #44	      Reset k to 0
+add r23 r26 r10   #48         L3:   Compute offset of a[i][k]: irow+k_col_offset
+add r10 r5 r18    #4c               Compute address of a[i][k]: r18 = base_a + offset
+add r21 r25 r11   #50 	    	    Compute offset for b[k][j]: krow+j_col_offset
+add r6 r11 r12    #54 		    Compute address of b[k][j]: r12 = base_b + offset
+ldw r18 0 r13     #58 		    Load a[i][k] into r13
+ldw r12 0 r14     #5c 		    Load b[k][j] into r14
+mul r13 r14 r15   #60 		    r15 = a[i][k] * b[k][j]
+add r4 r15 r4     #64 		    Accumulate: c[i][j] += a[i][k] * b[k][j]
+add r2 r19 r2     #68 		    Increment k: r2 += 1
+add r26 r8 r26	  #6c	    	    Increment kcol += 4
+add r21 r31 r21	  #70		    Increment krow += 128*4
+beq r2 124 r3	  #74 		    If k == 128, exit inner loop
+jump r30 72
+add r23 r25 r16   #7c          Compute offset for c[i][j]: irow+jcol
+add r7 r16 r17    #80          Compute address of c[i][j]: r17 = base_c + offset
+stw r4 0 r17      #84          Store result in c[i][j]
+add r1 r19 r1     #88         Increment j: r1 += 1
+add r25 r8 r25		       Increment jcol
+beq r1 152 r3	  #90 	       If j == 128, jump out
+jump r30 40	 
+add r0 r8 r0      #98 	  Increment i: r0 += 1
+add r23 r31 r23	          Increment offset for irow+= 128*4
+beq r0 400 r3	  #100 	  If i == 128, exit outer loop
+jump r30 48	

@@ -142,9 +142,12 @@ always @(posedge clk or posedge reset) begin
 
 		d_is_load_in <= (f_instr[31:25] == 'h10 || f_instr[31:25] == 'h11 || f_instr[31:25] == 'h12);
 		d_is_store_in <= (f_instr[31:25] == 'h13 || f_instr[31:25] == 'h14 || f_instr[31:25] == 'h15);
-
+		#0.01
 		if (d_func_in == 17) begin
 			d_r_a_in <= f_instr[19:0]; // LI WE WANT LITERAL
+		end else if (d_is_store_in) begin
+			$display("IS STORE DRA");
+			d_r_a_in <= try_bypass(f_instr[24:20]); //SRC1
 		end else begin
 			d_r_a_in <= try_bypass(f_instr[19:15]); //SRC1
 			if (f_instr[31:29] == 1) begin
@@ -154,13 +157,10 @@ always @(posedge clk or posedge reset) begin
 
 		d_w_in <= needs_write(f_instr[31:25]);
 		if (d_func_in == 3) begin
-			$display("Here!");
 			d_r_b_in <= f_instr[14:0];
 		end else if (f_instr[31:29] == 0) begin
-			$display("Here!2");
 			d_r_b_in <= try_bypass(f_instr[14:10]);
 		end else begin		
-			$display("Here!3");
 			d_r_b_in <= {f_instr[24:20], f_instr[14:0]};
 		end
 
@@ -174,13 +174,13 @@ always @(posedge clk or posedge reset) begin
 		end
 		#0.01
 		if (d_is_store_in) begin // STW, we need memory address from 
-			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); //[stld_size_in:0]; //Destination
+			d_r_d_a_val_in <= try_bypass(f_instr[19:15]); //[stld_size_in:0]; //Destination
 		end else if (d_func_in == 3) begin
 			d_r_d_a_val_in <= try_bypass(f_instr[24:20]); // Store second operand for comp
 			#0.01
 			$display("Decode: Beq, a: %d, b: %d", d_r_d_a_val_in, d_r_a_in);
 		end
-
+		#0.01
 		if (f_exception != 0) begin
 			$display("Exception in decode!");
 			f_nop_in <= 1;

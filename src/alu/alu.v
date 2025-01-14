@@ -129,9 +129,9 @@ always @(posedge clk or posedge reset) begin
 		f_nop_in <= 1;
         d_nop_in <= 1;
 	end
-    
 	if (reset == 0 && !d_nop) begin
-		#0.3
+        $display("Here %d", d_func);
+		#0.1
 		if (d_func == 0) begin
 			a_res_in = d_r_a + d_r_b;
             a_jump_in = 0;
@@ -150,7 +150,8 @@ always @(posedge clk or posedge reset) begin
                 a_res_in = 0;
                 a_jump_in = 0;
             end
-            //$display("Beq val %0d", a_jump_in);
+            #0.01
+            $display("Beq val %d %d",d_r_a, d_r_d_a_val );
 		end else if (d_func == 4) begin
             // d_r_b is offset
             $display("ALU jump");
@@ -161,7 +162,7 @@ always @(posedge clk or posedge reset) begin
         end else if (d_func == 6) begin
             // a_res_in = d_r_a + $signed(d_r_b);
             // a_r_d_a <= d_r_a; // Move real destination
-        end else if (d_func == 17 || d_func == 12) begin
+        end else if ((d_func > 9 && d_func < 16) || d_func == 17) begin
             a_res_in <= d_r_a;
             $display("Loading! %d", d_r_a);
         end else if (d_func == 32) begin //TLBWRITE
@@ -193,12 +194,10 @@ always @(posedge clk or posedge reset) begin
             a_jump_in <= 1;
             a_res_in <= rm0;
             $display("IRET, SWAPPING rm4 and JUMPING TO rm0");
-
 		end else begin
             a_res_in = 0;
             a_jump_in = 0;
         end
-        
 	end
 end
 		

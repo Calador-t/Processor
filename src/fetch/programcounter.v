@@ -11,6 +11,7 @@ always @(posedge clk or posedge reset) begin
 	// $display("WAIT F %d D %d A %d C %d", f_wait, d_wait, a_wait, c_wait);
 	// $display("ENABLE INC %d ENABLE PC %d", enable_inc, enable_pc);
 	if (pc == 400) begin
+			printmem();
 			$finish();
 		end
 	if (reset_pc) begin

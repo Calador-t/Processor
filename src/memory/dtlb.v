@@ -39,36 +39,36 @@ end
 always @(posedge dtlb_read) begin
     #0.2
     dtlb_read <= 0;
-    if (!f_nop_in) begin
-        if (!rm4 ) begin
-            hit <= 0;
-            #0.01
-            for (i = 0; i < 20; i = i + 1) begin 
-                $display("daddr %h, paddr %h, want %h", dtlb_vpns[i], dtlb_ppns[i], dtlb_va);
-                if (dtlb_vpns[i] == dtlb_va[31:12]) begin
-                    $display("Hit! %d, %d", dtlb_vpns[i], dtlb_va[31:12]);
-                    hit <= 1;
-                    d_addr <= dtlb_ppns[i] + dtlb_va[11:0];
-                end
+    
+    if (!rm4 ) begin
+        hit <= 0;
+        #0.01
+        for (i = 0; i < 20; i = i + 1) begin 
+            // $display("daddr %h, paddr %h, want %h", dtlb_vpns[i], dtlb_ppns[i], dtlb_va);
+            if (dtlb_vpns[i] == dtlb_va[31:12]) begin
+                // $display("Hit! %d, %d", dtlb_vpns[i], dtlb_va[31:12]);
+                hit <= 1;
+                d_addr <= dtlb_ppns[i] + dtlb_va[11:0];
             end
-            #0.01
+        end
+        #0.01
 
-            if (hit) begin
-                dcache_read <= 1;
-                #0.1
-                $display("dtlb HIT, addr at dtlb before %h, after %h", dtlb_va, d_addr);
-            end else if (a_exception == 0) begin
-                drm0 <= a_pc; // Save faulting PC
-                drm1 <= dtlb_va; // Save faulting memory @
-                c_exception_in <= 2;
-                #0.01
-                $display("dtlb MISS setting pc/rm0 to %d and addr to  %d", a_pc, dtlb_va);
-            end
-        end else begin 
-            d_addr <= dtlb_va;
+        if (hit) begin
             dcache_read <= 1;
             #0.1
-            $display("OFF addr at dtlb %h", d_addr);
+            $display("dtlb HIT, addr at dtlb before %h, after %h", dtlb_va, d_addr);
+        end else if (a_exception == 0) begin
+            drm0 <= a_pc; // Save faulting PC
+            drm1 <= dtlb_va; // Save faulting memory @
+            c_exception_in <= 2;
+            #0.01
+            $display("dtlb MISS setting pc/rm0 to %d and addr to  %d", a_pc, dtlb_va);
         end
+    end else begin 
+        d_addr <= dtlb_va;
+        dcache_read <= 1;
+        #0.1
+        $display("OFF addr at dtlb %h", d_addr);
     end
+
 end

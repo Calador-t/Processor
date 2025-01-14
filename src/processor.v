@@ -40,13 +40,15 @@ $dumpvars(0,processor_tb);
 #1 reset = 1;
 #1 reset = 0;
 
-// #2000 $finish;
+// #15500 $finish;
 	
 end
 
-
+integer cycle_num = 0;
 always @(posedge clk or posedge reset) begin
 	if (~reset) begin
+		cycle_num += 1;
+		$display("Cycle: %d", cycle_num);
 		#0.9
 		print_pipeline();
 	end
@@ -56,8 +58,8 @@ end
 task print_pipeline;
 begin
 	// $display("RM4 %d", rm4);
-	// // $display("ICACHE %d | %d | %d | %d", icache_data[0], icache_data[1], icache_data[2], icache_data[3]);
-	// // $display("DCACHE %d | %d | %d | %d", dcache_data[0], dcache_data[1], dcache_data[2], dcache_data[3]);
+	// $display("ICACHE %d | %d | %d | %d", icache_data[0], icache_data[1], icache_data[2], icache_data[3]);
+	// $display("DCACHE %b | %b | %b | %b", dcache_data[0], dcache_data[1], dcache_data[2], dcache_data[3]);
 	$display("  %h  F", pc);
 	$display("  %h  D: %h|%h|%h|%h|%h nop: %d", 
 		f_pc,
