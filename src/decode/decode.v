@@ -239,13 +239,13 @@ endfunction
 function [32:0] try_bypass;
 	input [4:0] adr;
 	if (d_func_in != 32 && d_func_in != 33) begin
-		if (d_nop == 0 && adr == d_r_d_a) begin
+		if (d_nop == 0 && adr == d_r_d_a && !d_is_store) begin
 			// Dependency from decode no bypass possible
 			$display("  Stall %h: RAW r%0d unresolvable from decode", f_pc[11:0], adr);
 			d_nop_in = 1;
 			d_wait = 1;
 			try_bypass = 32'bx;
-		end else if (a_nop == 0 && adr == a_r_d_a && a_w) begin
+		end else if (a_nop == 0 && adr == a_r_d_a && a_w && !a_is_store) begin
 			// Try bypass from alu first
 			if (a_is_load == 0) begin
 				try_bypass = a_res;

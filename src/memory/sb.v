@@ -55,6 +55,8 @@ begin
         c_wait = 0;
         c_nop_in = 0;
     end 
+    #0.1
+    print_sb();
 end
 endtask
 

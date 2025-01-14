@@ -13,8 +13,6 @@ reg [19:0] itlb_valids;
 reg [2:0] itlb_page_protections [19:0]; // R,W,RW,EX 
 reg [5:0] itlb_tail;
 
-reg [31:0] page_table_root_addr;
-
 // 2 level page table. 2 pages per table.
 
 always @(posedge reset) begin

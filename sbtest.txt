@@ -1,0 +1,5 @@
+stw r1 0 r11
+ldw r11 0 r1
+stw r12 0 r2
+ldw r2 0 r12
+jump r0 400

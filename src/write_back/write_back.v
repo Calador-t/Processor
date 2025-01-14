@@ -38,6 +38,7 @@ always @(posedge clk or posedge reset) begin
             pc_in <= 'h2010; // Jump to h2000
             pc_jump <= 1;
             rm4 <= 1; // Switch on supervisor mode
+            #0.1
             f_nop_in <= 1;
             d_nop_in <= 1;
             a_nop_in <= 1;
@@ -49,7 +50,7 @@ always @(posedge clk or posedge reset) begin
             drm1 <= -1;
             $display("dTLB EXCEPTION, JUMPING TO 2K!");
             $display("%d", c_exception);
-            $display("");
+            $display("c_wait %d, a_wait %d, d_wait %d, f_wait %d", c_wait, a_wait, d_wait, f_wait);
             $display("");
             $display("");
             $display("");

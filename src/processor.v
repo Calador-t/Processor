@@ -40,7 +40,14 @@ wire [31:0] data = 0;
 
 
 
-
+initial begin
+	// $readmemb("programs/buffer_mul.bin", __mem_data, 2048, 3000);
+	$readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/sbtest.bin", __mem_data, 2048, 3000);
+	// $readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
+	// Load instructions into memory here or use an external file.
+	// $readmemb("programs/memcpy.bin", __mem_data, 2048, 3000);
+end
 
 initial begin
 $dumpfile("test.vcd");
@@ -49,7 +56,7 @@ $dumpvars(0,processor_tb);
 #1 reset = 1;
 #1 reset = 0;
 
-// #700 $finish;
+// #600 $finish;
 	
 end
 

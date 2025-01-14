@@ -31,16 +31,7 @@ reg [31:0] rm0;
 reg [31:0] rm1;
 
 reg [127:0] __mem_data [100000:0]; 
-
-
-
-initial begin
-	// $readmemb("programs/buffer_mul.bin", __mem_data, 2048, 3000);
-	$readmemb("programs/matmul.bin", __mem_data, 2048, 3000);
-	// $readmemb("programs/buffer_sum.bin", __mem_data, 2048, 3000);
-	// Load instructions into memory here or use an external file.
-	// $readmemb("programs/memcpy.bin", __mem_data, 2048, 3000);
-end
+reg [32:0] page_table_root_addr;
 
 
 always @(posedge reset or posedge mem_reset) begin
@@ -52,6 +43,10 @@ always @(posedge reset or posedge mem_reset) begin
 	imem_read <= 0;
 	rm0 <= 0;
 	rm1 <= 0;
+	page_table_root_addr = 60000; // Alternating VA & PA. 2 level. this links to LVL 2 and has 4. 32000 -> 601001, 1 -> 60100, 2 -> 60100[3], 3 -> 60100[3]
+								  // 60100 = 64000
+	#0.01
+	// __mem_data[page_table_root_addr] = 128' 00000000000000000000000000000000;
 	
 	// PROCESSOR BOOTS WITH IRET
 	__mem_data[256] = 128'b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001100110000000000000000000000000;
@@ -128,7 +123,7 @@ always @(posedge clk) begin
 		iwait_cycles += 1;
 		#0.01
         // $display("WAIT CYCLES %d", iwait_cycles);
-		if (iwait_cycles >= 2) begin
+		if (iwait_cycles >= 4) begin
 			// if (__iwrite_or_read) begin
 			// 	__mem_data[__imem_a_buffer] <= __imem_in_d_buffer;
 			// 	// #0.01 $display("    Mem: Wirte [%d] = %d", __imem_a_buffer, __mem_data[__imem_a_buffer]);
@@ -149,7 +144,7 @@ always @(posedge clk) begin
 		dread_cycles += 1;
 		#0.01
         // $display("WAIT CYCLES %d", iwait_cycles);
-		if (dread_cycles >= 2) begin
+		if (dread_cycles >= 4) begin
 			out_dmem <= __mem_data[__dmem_r_a_buffer];
 			#0.01 $display("    Mem: Read [%d] = %b", __dmem_r_a_buffer, __mem_data[__dmem_r_a_buffer]);
 			dmem_finished = 1;
@@ -161,7 +156,7 @@ always @(posedge clk) begin
 		dwrite_cycles += 1;
 		#0.01
         // $display("WAIT CYCLES %d", iwait_cycles);
-		if (dwrite_cycles >= 2) begin
+		if (dwrite_cycles >= 4) begin
 			__mem_data[__dmem_w_a_buffer] <= __dmem_in_d_buffer;
 			#0.01 $display("    Mem: Wirte [%d] = %b", __dmem_w_a_buffer, __mem_data[__dmem_w_a_buffer]);
 			dwrite_cycles = -1;

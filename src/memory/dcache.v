@@ -149,25 +149,29 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
     dcache_read <= 0;
     #0.01
     if (dhit) begin
-        $display("DCACHE HIT size %d", a_stld_size);
+        $display("DCACHE HIT size %d", d_addr);
+        print_sb();
         if (a_is_store) begin
             $display("Store buffer");
             if (~sb_valid[sb_tail]) begin
+                $display("STORE");
                 sb_addresses[sb_tail] = d_addr;
                 sb_data[sb_tail] = a_r_d_a_val;
                 sb_valid[sb_tail] = 1;
                 sb_tail = (sb_tail + 1) % 4;
             end else begin
+                $display("DRAIN");
                 c_wait = 1;
                 sb_drain = 1;
                 c_nop_in = 1;
             end
-            print_sb();
+            
         end else if (a_is_load) begin
-            $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
             sb_index = check_sb(d_addr);
             #0.01
+            $display("SB INDEX %d", sb_index);
             if (sb_index == 5) begin
+                $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
                 if (a_stld_size == 8) begin
                     c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];                
                 end else if (a_stld_size == 16) begin
@@ -176,6 +180,7 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
                     c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
                 end
             end else begin
+                $display("GETTING SB %d", sb_index);
                 c_res_in = sb_data[sb_index];
             end
         end
@@ -187,6 +192,7 @@ always @(posedge dcache_read) begin // we get here from dTLB, so we can skip mos
             for (i = 0; i < 4; i = i + 1) begin 
                 j = (i + sb_head) % 4;
                 if (sb_addresses[j][31:4] == ((dcache_tags[d_addr[5:4]] * 4) + d_addr[5:4]) && sb_valid[j]) begin
+                    $display("STORE BUFFER FULL CANT FLUSH CACHE");
                     sb_drain = 1;
                     c_wait =1;
                     c_nop_in = 1;
@@ -270,13 +276,23 @@ always @(posedge clk) begin
             dmem_finished <= 0;
             #0.01
             if (a_is_load) begin
-                $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
-                if (a_stld_size == 8) begin
-                    c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];
-                end else if (a_stld_size == 16) begin
-                    c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
+                
+                sb_index = check_sb(d_addr);
+                
+                #0.01
+                $display("SB INDEX %d", sb_index);
+                if (sb_index == 5) begin
+                    $display("Loading %d bits from %d in dcache byte %d index %d", a_stld_size, dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32], d_addr[3:2], d_addr[5:4]);
+                    if (a_stld_size == 8) begin
+                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 8];                
+                    end else if (a_stld_size == 16) begin
+                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32 + d_addr[1:0]*8) +: 16];
+                    end else begin
+                        c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
+                    end
                 end else begin
-                    c_res_in <= dcache_data[d_addr[5:4]][(d_addr[3:2]* 32) +: 32];
+                    $display("Got it from stre buffer si %d", sb_data[sb_index] );
+                    c_res_in = sb_data[sb_index];
                 end
             end
             if (a_is_store) begin
@@ -300,6 +316,7 @@ always @(posedge clk) begin
         dtlb_va <= a_res;
         dtlb_read <= 1;
     end else begin
+        $display("Im free");
         drain_sb();
         if (a_nop == 1 && m5_nop == 0) begin
             c_res_in <= m5_res;

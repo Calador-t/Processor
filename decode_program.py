@@ -69,7 +69,7 @@ if len(sys.argv) >= 2 and sys.argv[1] != "":
 	file_path = sys.argv[1]
 print("From " + file_path + ":")
 file = open(file_path, 'r+')
-target_file = open('src/programs/memcpy.bin', 'w');
+target_file = open('src/programs/matmul.bin', 'w');
 
 out_line_index = 0
 out_line = ""
